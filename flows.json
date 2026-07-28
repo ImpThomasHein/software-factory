@@ -1,0 +1,1456 @@
+[
+    {
+        "id": "flow_loop",
+        "type": "tab",
+        "label": "Ralph Loop (Core Cycle)",
+        "disabled": false,
+        "info": "The per-ticket agent cycle: planner -> builder -> reviewer -> (fixer/re-review) -> finalize -> advance. Start/meta/telemetry live on separate tabs, wired via Link nodes.",
+        "env": []
+    },
+    {
+        "id": "flow_start",
+        "type": "tab",
+        "label": "Ralph: Start & Control",
+        "disabled": false,
+        "info": "Loop entry points (HTTP + dashboard form), one-time init/agent discovery, and the Stop button.",
+        "env": []
+    },
+    {
+        "id": "flow_meta",
+        "type": "tab",
+        "label": "Ralph: Meta Agents",
+        "disabled": false,
+        "info": "Runs every 5th iteration: refactor pass, then improve pass over accumulated progress notes.",
+        "env": []
+    },
+    {
+        "id": "flow_telemetry",
+        "type": "tab",
+        "label": "Ralph: Live Stream & Progress",
+        "disabled": false,
+        "info": "Dashboard live-stream feed and ticket-progress gauge, fed from every agent run.",
+        "env": []
+    },
+    {
+        "id": "flow_finish",
+        "type": "tab",
+        "label": "Ralph: Finish & Summary",
+        "disabled": false,
+        "info": "Terminal state: build and publish the end-of-loop summary.",
+        "env": []
+    },
+    {
+        "id": "ralph_ui_base",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseBackgroundColor": "#ffffff",
+                "surface": "#ffffff",
+                "primary": "#0094CE",
+                "secondary": "#0094CE"
+            }
+        },
+        "site": {
+            "name": "Ralph Loop Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "ralph_ui_tab",
+        "type": "ui_tab",
+        "name": "Ralph Loop",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ui_group_control",
+        "type": "ui_group",
+        "name": "Control",
+        "tab": "ralph_ui_tab",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "ui_group_status",
+        "type": "ui_group",
+        "name": "Status",
+        "tab": "ralph_ui_tab",
+        "order": 2,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "linkin_start_loop_1",
+        "type": "link in",
+        "z": "flow_loop",
+        "name": "Start Loop",
+        "links": [
+            "linkout_start_loop_2"
+        ],
+        "x": 80,
+        "y": 80,
+        "wires": [
+            [
+                "load_frontier"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_loop_finished_4",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Loop Finished",
+        "mode": "link",
+        "links": [
+            "linkin_loop_finished_3"
+        ],
+        "x": 260,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_loop_finished_5",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Loop Finished",
+        "mode": "link",
+        "links": [
+            "linkin_loop_finished_3"
+        ],
+        "x": 2460,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_meta_refactor_8",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Meta: Refactor Due",
+        "mode": "link",
+        "links": [
+            "linkin_meta_refactor_6"
+        ],
+        "x": 2240,
+        "y": -20,
+        "wires": []
+    },
+    {
+        "id": "linkout_meta_improve_9",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Meta: Improve Due",
+        "mode": "link",
+        "links": [
+            "linkin_meta_improve_7"
+        ],
+        "x": 2240,
+        "y": -60,
+        "wires": []
+    },
+    {
+        "id": "linkin_meta_done_a",
+        "type": "link in",
+        "z": "flow_loop",
+        "name": "Meta Done",
+        "links": [
+            "linkout_meta_done_b"
+        ],
+        "x": 2460,
+        "y": -20,
+        "wires": [
+            [
+                "advance_iteration"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_progress_d",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Progress Update",
+        "mode": "link",
+        "links": [
+            "linkin_progress_c"
+        ],
+        "x": 2020,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_f",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 700,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_g",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 1140,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_h",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 1580,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_i",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 2020,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "load_frontier",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "load frontier ticket",
+        "func": "const fs = global.get('fsp');\nconst path = global.get('path');\nconst { parseTickets, findFrontier } = global.get('ralphLib').tickets;\n\nif (global.get('ralphStopRequested')) {\n  msg.ralph.reason = 'stopped';\n  return [null, msg];\n}\n\nconst ticketsPath = path.join(msg.ralph.cwd, 'docs/tickets.md');\nconst content = await fs.readFile(ticketsPath, 'utf8');\nconst tickets = parseTickets(content);\nconst ticket = findFrontier(tickets);\n\nif (!ticket) {\n  msg.ralph.reason = 'no-frontier';\n  return [null, msg];\n}\n\nmsg.ralph.ticket = ticket;\nmsg.ralph.ticketsContent = content;\nmsg.ralph.remainingTickets = tickets.filter((t) => !t.done).length;\nmsg.ralph.startedIterationAt = Date.now();\nnode.status({ fill: \"blue\", shape: \"dot\", text: `#${ticket.id} ${ticket.title}` });\nreturn [msg, null];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "build_planner_task"
+            ],
+            [
+                "linkout_loop_finished_4"
+            ]
+        ]
+    },
+    {
+        "id": "build_planner_task",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "build planner task",
+        "func": "const { plannerTask } = global.get('ralphLib').tasks;\nmsg.ralph.agentName = 'ralph-planner';\nmsg.ralph.task = plannerTask(msg.ralph.ticket);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 80,
+        "wires": [
+            [
+                "run_agent_planner"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_planner",
+        "type": "ralph-run-agent",
+        "z": "flow_loop",
+        "name": "ralph-planner",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 700,
+        "y": 80,
+        "wires": [
+            [
+                "build_builder_task"
+            ],
+            [
+                "linkout_agent_event_f"
+            ]
+        ]
+    },
+    {
+        "id": "build_builder_task",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "build builder task",
+        "func": "const { builderTask } = global.get('ralphLib').tasks;\nmsg.ralph.plannerOutput = msg.payload;\nmsg.ralph.plannerResult = msg.ralph.result;\nmsg.ralph.agentName = 'ralph-builder';\nmsg.ralph.task = builderTask(msg.ralph.ticket, msg.ralph.plannerOutput);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 920,
+        "y": 80,
+        "wires": [
+            [
+                "run_agent_builder"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_builder",
+        "type": "ralph-run-agent",
+        "z": "flow_loop",
+        "name": "ralph-builder",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 1140,
+        "y": 80,
+        "wires": [
+            [
+                "build_reviewer_task"
+            ],
+            [
+                "linkout_agent_event_g"
+            ]
+        ]
+    },
+    {
+        "id": "build_reviewer_task",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "build reviewer task",
+        "func": "const { reviewerTask } = global.get('ralphLib').tasks;\nmsg.ralph.builderOutput = msg.payload;\nmsg.ralph.builderResult = msg.ralph.result;\nmsg.ralph.agentName = 'ralph-reviewer';\nmsg.ralph.reviewAttempt = 1;\nmsg.ralph.task = reviewerTask(msg.ralph.ticket, msg.ralph.builderOutput);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1360,
+        "y": 80,
+        "wires": [
+            [
+                "run_agent_reviewer"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_reviewer",
+        "type": "ralph-run-agent",
+        "z": "flow_loop",
+        "name": "ralph-reviewer",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 1580,
+        "y": 80,
+        "wires": [
+            [
+                "check_verdict"
+            ],
+            [
+                "linkout_agent_event_h"
+            ]
+        ]
+    },
+    {
+        "id": "check_verdict",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "check verdict",
+        "func": "const { parseVerdict } = global.get('ralphLib').verdict;\nconst { buildFixerTask } = global.get('ralphLib').tasks;\nmsg.ralph.reviewerOutput = msg.payload;\nmsg.ralph.reviewerResult = msg.ralph.result;\nconst verdict = parseVerdict(msg.ralph.reviewerOutput);\nmsg.ralph.verdict = verdict;\n\nconst attempt = msg.ralph.reviewAttempt || 1;\nif (verdict === 'READY' || attempt >= 3) {\n  node.status({ fill: verdict === 'READY' ? \"green\" : \"yellow\", shape: \"dot\", text: verdict });\n  return [msg, null];\n}\n\nconst nextAttempt = attempt + 1;\nmsg.ralph.reviewAttempt = nextAttempt;\nmsg.ralph.agentName = 'ralph-fixer';\nmsg.ralph.task = buildFixerTask(msg.ralph.ticket.id, msg.ralph.ticket.title, msg.ralph.plannerOutput, msg.ralph.reviewerOutput, nextAttempt);\nmsg.payload = msg.ralph.task;\nnode.status({ fill: \"yellow\", shape: \"dot\", text: `NEEDS_WORK, retry ${nextAttempt}` });\nreturn [null, msg];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1800,
+        "y": 80,
+        "wires": [
+            [
+                "finalize_iteration"
+            ],
+            [
+                "run_agent_fixer"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_fixer",
+        "type": "ralph-run-agent",
+        "z": "flow_loop",
+        "name": "ralph-fixer",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 2020,
+        "y": 180,
+        "wires": [
+            [
+                "build_rereview_task"
+            ],
+            [
+                "linkout_agent_event_i"
+            ]
+        ]
+    },
+    {
+        "id": "build_rereview_task",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "build re-review task",
+        "func": "const { reviewerTask } = global.get('ralphLib').tasks;\nmsg.ralph.fixerOutput = msg.payload;\nmsg.ralph.fixerResult = msg.ralph.result;\nmsg.ralph.agentName = 'ralph-reviewer';\nmsg.ralph.task = reviewerTask(msg.ralph.ticket, msg.ralph.fixerOutput);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2240,
+        "y": 180,
+        "wires": [
+            [
+                "run_agent_reviewer"
+            ]
+        ]
+    },
+    {
+        "id": "finalize_iteration",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "finalize iteration",
+        "func": "const fs = global.get('fsp');\nconst path = global.get('path');\nconst lib = global.get('ralphLib');\n\nconst ticket = msg.ralph.ticket;\nlet ticketMarkedDone = false;\nif (msg.ralph.verdict === 'READY') {\n  const updated = lib.tickets.setTicketDone(msg.ralph.ticketsContent, ticket.id);\n  await fs.writeFile(path.join(msg.ralph.cwd, 'docs/tickets.md'), updated, 'utf8');\n  ticketMarkedDone = true;\n  msg.ralph.completedTickets = (msg.ralph.completedTickets || 0) + 1;\n}\nmsg.ralph.attemptedTickets = (msg.ralph.attemptedTickets || 0) + 1;\n\nconst changed = await lib.git.detectChangedFiles(msg.ralph.cwd);\nmsg.ralph.changedFiles = [...new Set([...(msg.ralph.changedFiles || []), ...changed])];\n\nconst testRunResult = await lib.git.runTestsOrNull(msg.ralph.cwd).catch((e) => `tests failed: ${e.message}`);\nconst linesOfCode = await lib.fsUtils.countFiles(path.join(msg.ralph.cwd, 'application/src'));\nconst linesOfTests = await lib.fsUtils.countTestFiles(path.join(msg.ralph.cwd, 'application'));\n\nconst entry = lib.progress.formatProgressEntry({\n  iteration: msg.ralph.iteration,\n  totalIterations: msg.ralph.total,\n  ticketId: ticket.id,\n  ticketTitle: ticket.title,\n  startedAt: new Date(msg.ralph.startedIterationAt),\n  finishedAt: new Date(),\n  agentOutputs: {\n    planner: msg.ralph.plannerOutput,\n    builder: msg.ralph.builderOutput,\n    reviewer: msg.ralph.reviewerOutput,\n  },\n  verdict: msg.ralph.verdict,\n  ticketMarkedDone,\n  designDecisions: lib.text.extractBullets(msg.ralph.plannerOutput, /design|entscheid/i),\n  recommendations: lib.text.extractBullets(msg.ralph.reviewerOutput, /empfehl|recommend|next/i),\n  testRunResult,\n  devTimeSeconds: Math.round((Date.now() - msg.ralph.startedIterationAt) / 1000),\n  linesOfCode,\n  linesOfTests,\n  keyChanges: changed,\n  keyInsights: lib.text.extractBullets(msg.ralph.reviewerOutput, /insight|erkenntnis|lesson/i),\n});\nawait lib.progress.appendProgress(path.join(msg.ralph.cwd, '.pi/ralph-loop/progress.md'), entry);\n// Per-agent transcripts (.pi/ralph-loop/logs/iter-*.md) and the debug.jsonl trail are\n// now written immediately after each process exits by the ralph-run-agent node itself,\n// so every agent (incl. fixer/refactor/improver) is covered, not just planner/builder/reviewer.\nawait lib.notify.sendNtfyNotification(\n  `Iteration ${msg.ralph.iteration}: ${msg.ralph.verdict}`,\n  `Ticket #${ticket.id}: ${ticket.title}`\n);\n\nmsg.ralph.ticketMarkedDone = ticketMarkedDone;\nmsg.payload = { iteration: msg.ralph.iteration, ticket: { id: ticket.id, title: ticket.title }, verdict: msg.ralph.verdict, ticketMarkedDone };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2020,
+        "y": 80,
+        "wires": [
+            [
+                "check_meta_agents",
+                "linkout_progress_d"
+            ]
+        ]
+    },
+    {
+        "id": "check_meta_agents",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "check refactor/improve due",
+        "func": "const every = msg.ralph.iteration % 5 === 0;\nif (every && msg.ralph.changedFiles.length > 0) return [msg, null, null];\nif (every) return [null, msg, null];\nreturn [null, null, msg];",
+        "outputs": 3,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2240,
+        "y": 80,
+        "wires": [
+            [
+                "linkout_meta_refactor_8"
+            ],
+            [
+                "linkout_meta_improve_9"
+            ],
+            [
+                "advance_iteration"
+            ]
+        ]
+    },
+    {
+        "id": "advance_iteration",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "advance iteration",
+        "func": "if (global.get('ralphStopRequested')) {\n  msg.ralph.reason = 'stopped';\n  return [null, msg];\n}\nif (msg.ralph.iteration >= msg.ralph.total) {\n  msg.ralph.reason = 'loops-exhausted';\n  return [null, msg];\n}\nmsg.ralph.iteration += 1;\nreturn [msg, null];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2460,
+        "y": 80,
+        "wires": [
+            [
+                "load_frontier"
+            ],
+            [
+                "linkout_loop_finished_5"
+            ]
+        ]
+    },
+    {
+        "id": "catch_loop_errors",
+        "type": "catch",
+        "z": "flow_loop",
+        "name": "Catch (Loop)",
+        "scope": null,
+        "uncaught": false,
+        "x": 260,
+        "y": 300,
+        "wires": [
+            [
+                "fn_report_error_loop"
+            ]
+        ]
+    },
+    {
+        "id": "fn_report_error_loop",
+        "type": "function",
+        "z": "flow_loop",
+        "name": "report error (loop)",
+        "func": "const err = msg.error || {};\nconst sourceName = (err.source && (err.source.name || err.source.type)) || 'unknown node';\nnode.warn(`[ralph-loop] Fehler in Iteration ${msg.ralph ? msg.ralph.iteration : '?'} in \"${sourceName}\": ${err.message}`);\nnode.status({ fill: \"red\", shape: \"dot\", text: `error: ${sourceName}` });\nmsg.ralphError = {\n  node: sourceName,\n  message: err.message || String(err),\n  iteration: (msg.ralph && msg.ralph.iteration) || 0,\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 300,
+        "wires": [
+            [
+                "linkout_loop_error_loop"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_loop_error_loop",
+        "type": "link out",
+        "z": "flow_loop",
+        "name": "Loop Error",
+        "mode": "link",
+        "links": [
+            "linkin_loop_error_1"
+        ],
+        "x": 700,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "linkout_start_loop_2",
+        "type": "link out",
+        "z": "flow_start",
+        "name": "Start Loop",
+        "mode": "link",
+        "links": [
+            "linkin_start_loop_1"
+        ],
+        "x": 1080,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "http_in_start",
+        "type": "http in",
+        "z": "flow_start",
+        "name": "POST /ralph/start",
+        "url": "/ralph/start",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 80,
+        "wires": [
+            [
+                "fn_prep_http"
+            ]
+        ]
+    },
+    {
+        "id": "fn_prep_http",
+        "type": "function",
+        "z": "flow_start",
+        "name": "prepare http start",
+        "func": "const loops = Number.parseInt(msg.payload && msg.payload.loops, 10) || 1;\nconst repoRoot = (msg.payload && msg.payload.repoRoot) || global.get('ralphRepoRoot');\nconst verifyCommand = (msg.payload && msg.payload.verifyCommand) || undefined;\nconst respMsg = { ...msg, payload: { status: \"accepted\", loops, repoRoot, verifyCommand }, statusCode: 202 };\nconst startMsg = { payload: { loops, repoRoot, verifyCommand } };\nnode.send([respMsg, startMsg]);\nreturn null;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 80,
+        "wires": [
+            [
+                "http_resp_start"
+            ],
+            [
+                "init_loop_state"
+            ]
+        ]
+    },
+    {
+        "id": "http_resp_start",
+        "type": "http response",
+        "z": "flow_start",
+        "name": "202 Accepted",
+        "statusCode": "",
+        "headers": {},
+        "x": 600,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "ui_form_start",
+        "type": "ui_form",
+        "z": "flow_start",
+        "name": "Start Loop",
+        "label": "Start Ralph Loop",
+        "group": "ui_group_control",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "options": [
+            {
+                "label": "Iterationen",
+                "value": "loops",
+                "type": "number",
+                "required": true,
+                "rows": null
+            },
+            {
+                "label": "Repo-Pfad",
+                "value": "repoRoot",
+                "type": "text",
+                "required": false,
+                "rows": null
+            },
+            {
+                "label": "Verify-Kommando (Build/Test)",
+                "value": "verifyCommand",
+                "type": "text",
+                "required": false,
+                "rows": null
+            }
+        ],
+        "formValue": {
+            "loops": 3,
+            "repoRoot": "",
+            "verifyCommand": ""
+        },
+        "payload": "",
+        "submit": "Start",
+        "cancel": "Abbrechen",
+        "topic": "start",
+        "topicType": "str",
+        "splitLayout": "",
+        "className": "",
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "fn_prep_dashboard_start"
+            ]
+        ]
+    },
+    {
+        "id": "fn_prep_dashboard_start",
+        "type": "function",
+        "z": "flow_start",
+        "name": "normalize dashboard start",
+        "func": "const loops = Number.parseInt(msg.payload && msg.payload.loops, 10) || 1;\nconst repoRoot = (msg.payload && msg.payload.repoRoot) || global.get('ralphRepoRoot');\nconst verifyCommand = (msg.payload && msg.payload.verifyCommand) || undefined;\nmsg.payload = { loops, repoRoot, verifyCommand };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 160,
+        "wires": [
+            [
+                "init_loop_state"
+            ]
+        ]
+    },
+    {
+        "id": "init_loop_state",
+        "type": "function",
+        "z": "flow_start",
+        "name": "init loop state",
+        "func": "const path = global.get('path');\nconst tasksLib = global.get('ralphLib').tasks;\nconst loops = Math.max(1, Number(msg.payload.loops) || 1);\nconst cwd = path.resolve(msg.payload.repoRoot || global.get('ralphRepoRoot'));\nconst AC = global.get('AbortController');\nconst abortController = new AC();\nglobal.set('ralphAbortController', abortController);\nglobal.set('ralphStopRequested', false);\nglobal.set('ralphLoopRunning', true);\nconst sharedPrompt = await tasksLib.loadSharedPrompt(cwd, '.pi/ralph-loop/system-prompt.md');\nmsg.ralph = {\n  cwd, sharedPrompt, abortController,\n  iteration: 1, total: loops,\n  completedTickets: 0, attemptedTickets: 0,\n  changedFiles: [], startedAt: Date.now(),\n  verifyCommand: msg.payload.verifyCommand || global.get('ralphVerifyCommand'),\n  verifyMaxAttempts: global.get('ralphVerifyMaxAttempts'),\n  verifyAttempt: 1,\n};\nnode.status({ fill: \"blue\", shape: \"dot\", text: `starting: ${loops} iterations` });\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 160,
+        "wires": [
+            [
+                "discover_agents"
+            ]
+        ]
+    },
+    {
+        "id": "discover_agents",
+        "type": "ralph-discover-agents",
+        "z": "flow_start",
+        "name": "discover ralph agents",
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "requireDefault": true,
+        "x": 860,
+        "y": 160,
+        "wires": [
+            [
+                "linkout_start_loop_2"
+            ]
+        ]
+    },
+    {
+        "id": "ui_button_stop",
+        "type": "ui_button",
+        "z": "flow_start",
+        "name": "Stop",
+        "group": "ui_group_control",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Stop Loop",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#ca3838",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "stop",
+        "topicType": "str",
+        "x": 150,
+        "y": 280,
+        "wires": [
+            [
+                "fn_stop"
+            ]
+        ]
+    },
+    {
+        "id": "fn_stop",
+        "type": "function",
+        "z": "flow_start",
+        "name": "request stop",
+        "func": "global.set('ralphStopRequested', true);\nconst ac = global.get('ralphAbortController');\nif (ac) ac.abort();\nnode.status({ fill: \"grey\", shape: \"ring\", text: \"stop requested\" });\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "catch_start_errors",
+        "type": "catch",
+        "z": "flow_start",
+        "name": "Catch (Start)",
+        "scope": null,
+        "uncaught": false,
+        "x": 640,
+        "y": 300,
+        "wires": [
+            [
+                "fn_report_error_start"
+            ]
+        ]
+    },
+    {
+        "id": "fn_report_error_start",
+        "type": "function",
+        "z": "flow_start",
+        "name": "report error (start)",
+        "func": "const err = msg.error || {};\nconst sourceName = (err.source && (err.source.name || err.source.type)) || 'unknown node';\nnode.warn(`[ralph-loop] Fehler vor Loop-Start in \"${sourceName}\": ${err.message}`);\nnode.status({ fill: \"red\", shape: \"dot\", text: `error: ${sourceName}` });\nmsg.ralphError = {\n  node: sourceName,\n  message: err.message || String(err),\n  iteration: (msg.ralph && msg.ralph.iteration) || 0,\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 300,
+        "wires": [
+            [
+                "linkout_loop_error_start"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_loop_error_start",
+        "type": "link out",
+        "z": "flow_start",
+        "name": "Loop Error",
+        "mode": "link",
+        "links": [
+            "linkin_loop_error_1"
+        ],
+        "x": 1080,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "linkin_meta_refactor_6",
+        "type": "link in",
+        "z": "flow_meta",
+        "name": "Meta: Refactor Due",
+        "links": [
+            "linkout_meta_refactor_8"
+        ],
+        "x": 80,
+        "y": 80,
+        "wires": [
+            [
+                "build_refactor_task"
+            ]
+        ]
+    },
+    {
+        "id": "linkin_meta_improve_7",
+        "type": "link in",
+        "z": "flow_meta",
+        "name": "Meta: Improve Due",
+        "links": [
+            "linkout_meta_improve_9"
+        ],
+        "x": 80,
+        "y": 200,
+        "wires": [
+            [
+                "build_improve_task"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_meta_done_b",
+        "type": "link out",
+        "z": "flow_meta",
+        "name": "Meta Done",
+        "mode": "link",
+        "links": [
+            "linkin_meta_done_a"
+        ],
+        "x": 1360,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_j",
+        "type": "link out",
+        "z": "flow_meta",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 700,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_agent_event_k",
+        "type": "link out",
+        "z": "flow_meta",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 700,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "build_refactor_task",
+        "type": "function",
+        "z": "flow_meta",
+        "name": "build refactor task",
+        "func": "const { refactorTask } = global.get('ralphLib').tasks;\nmsg.ralph.agentName = 'ralph-refactor';\nmsg.ralph.task = refactorTask(msg.ralph.changedFiles);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "run_agent_refactor"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_refactor",
+        "type": "ralph-run-agent",
+        "z": "flow_meta",
+        "name": "ralph-refactor",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 480,
+        "y": 80,
+        "wires": [
+            [
+                "clear_changed_files"
+            ],
+            [
+                "linkout_agent_event_j"
+            ]
+        ]
+    },
+    {
+        "id": "clear_changed_files",
+        "type": "function",
+        "z": "flow_meta",
+        "name": "clear changed files",
+        "func": "msg.ralph.changedFiles = [];\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 80,
+        "wires": [
+            [
+                "build_improve_task"
+            ]
+        ]
+    },
+    {
+        "id": "build_improve_task",
+        "type": "function",
+        "z": "flow_meta",
+        "name": "build improve task",
+        "func": "const fs = global.get('fsp');\nconst path = global.get('path');\nconst { improveTask } = global.get('ralphLib').tasks;\nconst progressText = await fs.readFile(path.join(msg.ralph.cwd, '.pi/ralph-loop/progress.md'), 'utf8').catch(() => '');\nmsg.ralph.agentName = 'ralph-improver';\nmsg.ralph.task = improveTask(progressText);\nmsg.payload = msg.ralph.task;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 200,
+        "wires": [
+            [
+                "run_agent_improve"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_improve",
+        "type": "ralph-run-agent",
+        "z": "flow_meta",
+        "name": "ralph-improver",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 920,
+        "y": 200,
+        "wires": [
+            [
+                "append_improvement"
+            ],
+            [
+                "linkout_agent_event_k"
+            ]
+        ]
+    },
+    {
+        "id": "append_improvement",
+        "type": "function",
+        "z": "flow_meta",
+        "name": "append improvement",
+        "func": "const path = global.get('path');\nconst lib = global.get('ralphLib');\nawait lib.improvements.appendImprovement(path.join(msg.ralph.cwd, '.pi/ralph-loop/improvements.md'), msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 200,
+        "wires": [
+            [
+                "linkout_meta_done_b"
+            ]
+        ]
+    },
+    {
+        "id": "linkin_progress_c",
+        "type": "link in",
+        "z": "flow_telemetry",
+        "name": "Progress Update",
+        "links": [
+            "linkout_progress_d"
+        ],
+        "x": 80,
+        "y": 320,
+        "wires": [
+            [
+                "fn_progress_gauge"
+            ]
+        ]
+    },
+    {
+        "id": "linkin_agent_event_e",
+        "type": "link in",
+        "z": "flow_telemetry",
+        "name": "Agent Event",
+        "links": [
+            "linkout_agent_event_f",
+            "linkout_agent_event_g",
+            "linkout_agent_event_h",
+            "linkout_agent_event_i",
+            "linkout_agent_event_j",
+            "linkout_agent_event_k",
+            "linkout_agent_event_l"
+        ],
+        "x": 80,
+        "y": 80,
+        "wires": [
+            [
+                "log_stream_merge"
+            ]
+        ]
+    },
+    {
+        "id": "log_stream_merge",
+        "type": "function",
+        "z": "flow_telemetry",
+        "name": "format stream event",
+        "func": "const evt = msg.payload || {};\nconst agent = (msg.ralph && msg.ralph.agentName) || '?';\nmsg.payload = {\n  agent,\n  ticket: msg.ralph && msg.ralph.ticket ? `#${msg.ralph.ticket.id} ${msg.ralph.ticket.title}` : '',\n  iteration: msg.ralph ? msg.ralph.iteration : '',\n  total: msg.ralph ? msg.ralph.total : '',\n  currentTool: evt.currentTool ? `${evt.currentTool.name}(${evt.currentTool.args})` : '',\n  finalOutput: (evt.finalOutput || '').slice(-1500),\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 80,
+        "wires": [
+            [
+                "ui_template_stream"
+            ]
+        ]
+    },
+    {
+        "id": "ui_template_stream",
+        "type": "ui_template",
+        "z": "flow_telemetry",
+        "group": "ui_group_status",
+        "name": "Live Agent Stream",
+        "order": 1,
+        "width": "3",
+        "height": "0",
+        "format": "<div style=\"font-family:monospace;font-size:12px;white-space:pre-wrap;width:100%;height:calc(100vh - 220px);overflow:auto;box-sizing:border-box\">\n<b>{{msg.payload.agent}}</b> \u2014 {{msg.payload.ticket}} (Iteration {{msg.payload.iteration}}/{{msg.payload.total}})<br/>\n<span ng-if=\"msg.payload.currentTool\"><i>tool: {{msg.payload.currentTool}}</i><br/></span>\n{{msg.payload.finalOutput}}\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 540,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ui_progress_ticket",
+        "type": "ui_gauge",
+        "z": "flow_telemetry",
+        "group": "ui_group_control",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Fortschritt",
+        "label": "Tickets erledigt",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "className": "",
+        "x": 540,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "fn_progress_gauge",
+        "type": "function",
+        "z": "flow_telemetry",
+        "name": "extract completed count",
+        "func": "msg.payload = msg.ralph ? (msg.ralph.completedTickets || 0) : 0;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 320,
+        "wires": [
+            [
+                "ui_progress_ticket"
+            ]
+        ]
+    },
+    {
+        "id": "inject_status_poll",
+        "type": "inject",
+        "z": "flow_telemetry",
+        "name": "poll process status",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 300,
+        "y": 400,
+        "wires": [
+            [
+                "fn_read_loop_status"
+            ]
+        ]
+    },
+    {
+        "id": "fn_read_loop_status",
+        "type": "function",
+        "z": "flow_telemetry",
+        "name": "read loop status",
+        "func": "const running = !!global.get('ralphLoopRunning');\nconst stopRequested = !!global.get('ralphStopRequested');\nmsg.payload = { running, stopRequested };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 400,
+        "wires": [
+            [
+                "ui_template_status"
+            ]
+        ]
+    },
+    {
+        "id": "ui_template_status",
+        "type": "ui_template",
+        "z": "flow_telemetry",
+        "group": "ui_group_control",
+        "name": "Prozess-Status",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "format": "<div style=\"display:flex;align-items:center;gap:8px;font-family:sans-serif;font-size:14px;\">\n<span style=\"display:inline-block;width:12px;height:12px;border-radius:50%;background:{{msg.payload.running ? (msg.payload.stopRequested ? '#e6a700' : '#00b500') : '#9e9e9e'}};box-shadow:0 0 6px {{msg.payload.running ? (msg.payload.stopRequested ? '#e6a700' : '#00b500') : 'transparent'}};\"></span>\n<b>{{msg.payload.running ? (msg.payload.stopRequested ? 'Wird gestoppt\u2026' : 'L\u00e4uft') : 'Gestoppt'}}</b>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 780,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "linkin_loop_finished_3",
+        "type": "link in",
+        "z": "flow_finish",
+        "name": "Loop Finished",
+        "links": [
+            "linkout_loop_finished_4",
+            "linkout_loop_finished_5"
+        ],
+        "x": 80,
+        "y": 80,
+        "wires": [
+            [
+                "loop_finished"
+            ]
+        ]
+    },
+    {
+        "id": "loop_finished",
+        "type": "function",
+        "z": "flow_finish",
+        "name": "loop finished summary",
+        "func": "const lib = global.get('ralphLib');\nconst durationSec = Math.round((Date.now() - msg.ralph.startedAt) / 1000);\nconst summary = {\n  reason: msg.ralph.reason,\n  iterations: msg.ralph.iteration,\n  attemptedTickets: msg.ralph.attemptedTickets || 0,\n  completedTickets: msg.ralph.completedTickets || 0,\n  durationSec,\n};\nmsg.ralph.loopSummary = summary;\nnode.status({ fill: \"grey\", shape: \"ring\", text: `stopped: ${summary.reason}` });\nawait lib.notify.sendNtfyNotification('Ralph Loop beendet', JSON.stringify(summary));\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 80,
+        "wires": [
+            [
+                "run_verify"
+            ]
+        ]
+    },
+    {
+        "id": "debug_summary",
+        "type": "debug",
+        "z": "flow_finish",
+        "name": "loop summary",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1180,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "ui_text_summary",
+        "type": "ui_text",
+        "z": "flow_finish",
+        "group": "ui_group_control",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Loop Summary",
+        "label": "Loop-Ergebnis",
+        "format": "{{msg.payload.reason}}: {{msg.payload.completedTickets}}/{{msg.payload.attemptedTickets}} Tickets, {{msg.payload.durationSec}}s",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1640,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "linkin_loop_error_1",
+        "type": "link in",
+        "z": "flow_finish",
+        "name": "Loop Error",
+        "links": [
+            "linkout_loop_error_start",
+            "linkout_loop_error_loop"
+        ],
+        "x": 80,
+        "y": 220,
+        "wires": [
+            [
+                "fn_finalize_error"
+            ]
+        ]
+    },
+    {
+        "id": "fn_finalize_error",
+        "type": "function",
+        "z": "flow_finish",
+        "name": "finalize error",
+        "func": "if (!msg.ralphError) {\n  const err = msg.error || {};\n  const sourceName = (err.source && (err.source.name || err.source.type)) || 'unknown node';\n  msg.ralphError = {\n    node: sourceName,\n    message: err.message || String(err),\n    iteration: (msg.ralph && msg.ralph.iteration) || 0,\n  };\n}\nconst lib = global.get('ralphLib');\nglobal.set('ralphAbortController', null);\nglobal.set('ralphStopRequested', false);\nglobal.set('ralphLoopRunning', false);\nconst e = msg.ralphError || {};\nmsg.payload = {\n  reason: `error in \"${e.node}\": ${e.message}`,\n  iterations: e.iteration || 0,\n  attemptedTickets: (msg.ralph && msg.ralph.attemptedTickets) || 0,\n  completedTickets: (msg.ralph && msg.ralph.completedTickets) || 0,\n  durationSec: msg.ralph ? Math.round((Date.now() - msg.ralph.startedAt) / 1000) : 0,\n};\ntry {\n  await lib.notify.sendNtfyNotification('Ralph Loop Fehler', JSON.stringify(msg.payload));\n} catch (_) { /* notification best-effort */ }\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 220,
+        "wires": [
+            [
+                "ui_text_summary",
+                "debug_summary",
+                "debug_error_raw"
+            ]
+        ]
+    },
+    {
+        "id": "debug_error_raw",
+        "type": "debug",
+        "z": "flow_finish",
+        "name": "loop error (raw)",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "true",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1190,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "run_verify",
+        "type": "ralph-run-verify",
+        "z": "flow_finish",
+        "name": "verify build/test",
+        "command": "ralph.verifyCommand",
+        "commandType": "msg",
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "x": 560,
+        "y": 80,
+        "wires": [
+            [
+                "check_verify"
+            ]
+        ]
+    },
+    {
+        "id": "check_verify",
+        "type": "function",
+        "z": "flow_finish",
+        "name": "check verify result",
+        "func": "const lib = global.get('ralphLib');\nconst verify = msg.ralph.verify;\nconst attempt = msg.ralph.verifyAttempt || 1;\nconst maxAttempts = msg.ralph.verifyMaxAttempts || 5;\n\nif (verify.success) {\n  node.status({ fill: \"green\", shape: \"dot\", text: `verify OK (Versuch ${attempt})` });\n  msg.ralph.verifyFinal = { success: true, attempts: attempt, output: verify.output, command: verify.command };\n  return [msg, null];\n}\n\nif (global.get('ralphStopRequested')) {\n  node.status({ fill: \"grey\", shape: \"ring\", text: \"verify: stopped\" });\n  msg.ralph.verifyFinal = { success: false, attempts: attempt, output: verify.output, command: verify.command, stopped: true };\n  return [msg, null];\n}\n\nif (attempt >= maxAttempts) {\n  node.status({ fill: \"red\", shape: \"ring\", text: `verify FEHLGESCHLAGEN (${attempt} Versuche)` });\n  msg.ralph.verifyFinal = { success: false, attempts: attempt, output: verify.output, command: verify.command };\n  return [msg, null];\n}\n\nnode.status({ fill: \"yellow\", shape: \"dot\", text: `verify failed, starte ralph-ci-fixer (Versuch ${attempt + 1})` });\nmsg.ralph.verifyAttempt = attempt + 1;\nmsg.ralph.agentName = 'ralph-ci-fixer';\nmsg.ralph.task = lib.tasks.buildCiFixerTask(verify.command, verify.output, attempt);\nmsg.payload = msg.ralph.task;\nreturn [null, msg];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 80,
+        "wires": [
+            [
+                "finalize_summary"
+            ],
+            [
+                "run_agent_ci_fixer"
+            ]
+        ]
+    },
+    {
+        "id": "run_agent_ci_fixer",
+        "type": "ralph-run-agent",
+        "z": "flow_finish",
+        "name": "ralph-ci-fixer",
+        "agentName": "",
+        "agentNameFromMsg": true,
+        "cwd": "ralph.cwd",
+        "cwdType": "msg",
+        "modelOverride": "",
+        "toolsOverride": "",
+        "sharedPromptFromMsg": true,
+        "x": 1030,
+        "y": 140,
+        "wires": [
+            [
+                "run_verify"
+            ],
+            [
+                "linkout_agent_event_l"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_agent_event_l",
+        "type": "link out",
+        "z": "flow_finish",
+        "name": "Agent Event",
+        "mode": "link",
+        "links": [
+            "linkin_agent_event_e"
+        ],
+        "x": 1215,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "finalize_summary",
+        "type": "function",
+        "z": "flow_finish",
+        "name": "finalize summary (with verify)",
+        "func": "const lib = global.get('ralphLib');\nconst base = msg.ralph.loopSummary;\nconst vf = msg.ralph.verifyFinal;\nconst attemptsLabel = `${vf.attempts} Versuch${vf.attempts === 1 ? '' : 'en'}`;\nmsg.payload = {\n  ...base,\n  reason: vf.stopped\n    ? `${base.reason} \u00b7 Verify gestoppt nach ${attemptsLabel}`\n    : vf.success\n      ? `${base.reason} \u00b7 Verify OK (${attemptsLabel})`\n      : `${base.reason} \u00b7 Verify FEHLGESCHLAGEN nach ${attemptsLabel}`,\n  verify: { success: vf.success, attempts: vf.attempts, command: vf.command, stopped: !!vf.stopped },\n};\ntry {\n  await lib.notify.sendNtfyNotification(\n    vf.success ? 'Ralph Loop: Verify OK' : 'Ralph Loop: Verify fehlgeschlagen',\n    `${vf.command}${vf.success ? '' : '\\n' + (vf.output || '').slice(-500)}`\n  );\n} catch (_) { /* notification best-effort */ }\nglobal.set('ralphAbortController', null);\nglobal.set('ralphLoopRunning', false);\nglobal.set('ralphStopRequested', false);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1340,
+        "y": 80,
+        "wires": [
+            [
+                "ui_text_summary",
+                "debug_summary"
+            ]
+        ]
+    },
+    {
+        "id": "catch_finish_errors",
+        "type": "catch",
+        "z": "flow_finish",
+        "name": "Catch (Finish)",
+        "scope": null,
+        "uncaught": false,
+        "x": 130,
+        "y": 300,
+        "wires": [
+            [
+                "fn_finalize_error"
+            ]
+        ]
+    }
+]

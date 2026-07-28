@@ -1,0 +1,86 @@
+<script type="text/javascript">
+  RED.nodes.registerType('ralph-run-agent', {
+    category: 'ralph-loop',
+    color: '#ffcc66',
+    defaults: {
+      name: { value: '' },
+      agentName: { value: 'ralph-planner' },
+      agentNameFromMsg: { value: false },
+      cwd: { value: '' },
+      cwdType: { value: 'str' },
+      modelOverride: { value: '' },
+      toolsOverride: { value: '' },
+      sharedPromptFromMsg: { value: true },
+    },
+    inputs: 1,
+    outputs: 2,
+    icon: 'font-awesome/fa-cogs',
+    label: function () {
+      return this.name || `run agent: ${this.agentNameFromMsg ? 'msg.ralph.agentName' : this.agentName}`;
+    },
+    paletteLabel: 'run pi agent',
+    outputLabels: ['final result', 'stream event'],
+    oneditprepare: function () {
+      $('#node-input-cwdType').val(this.cwdType || 'str');
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="ralph-run-agent">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-agentName"><i class="fa fa-user"></i> Agent</label>
+    <input type="text" id="node-input-agentName" placeholder="ralph-planner" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-agentNameFromMsg">&nbsp;</label>
+    <input type="checkbox" id="node-input-agentNameFromMsg" style="width:auto" />
+    <label for="node-input-agentNameFromMsg" style="width:auto">take agent name from msg.ralph.agentName</label>
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwd"><i class="fa fa-folder"></i> Repo path</label>
+    <input type="text" id="node-input-cwd" placeholder="leave empty to use msg.ralph.cwd" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwdType">&nbsp;</label>
+    <select id="node-input-cwdType" style="width:70%">
+      <option value="str">fixed path (above)</option>
+      <option value="msg">msg property (path above, e.g. ralph.cwd)</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-modelOverride"><i class="fa fa-microchip"></i> Model override</label>
+    <input type="text" id="node-input-modelOverride" placeholder="optional, else agent frontmatter" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-toolsOverride"><i class="fa fa-wrench"></i> Tools override</label>
+    <input type="text" id="node-input-toolsOverride" placeholder="optional, comma-separated, else agent frontmatter" />
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-sharedPromptFromMsg" style="width:auto" />
+    <label for="node-input-sharedPromptFromMsg" style="width:auto">prepend msg.ralph.sharedPrompt to system prompt</label>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="ralph-run-agent">
+  <p>Spawns a fresh <code>pi --mode json -p --no-session</code> subprocess for one ralph agent (planner, builder, reviewer, fixer, refactor, improver, or any custom <code>ralph-*.md</code> agent under <code>.pi/agents/</code>).</p>
+  <h3>Inputs</h3>
+  <dl class="message-properties">
+    <dt>payload / ralph.task <span class="property-type">string</span></dt>
+    <dd>The task text sent to the agent (falls back to msg.payload if msg.ralph.task is unset).</dd>
+    <dt>ralph.cwd <span class="property-type">string</span></dt>
+    <dd>Repo root to run <code>pi</code> in — used when "cwd" is set to "msg property" or left empty on the node.</dd>
+    <dt>ralph.sharedPrompt <span class="property-type">string</span></dt>
+    <dd>Optional shared system prompt prepended to the agent's own system prompt.</dd>
+    <dt>ralph.abortController <span class="property-type">AbortController</span></dt>
+    <dd>Optional shared controller; calling <code>.abort()</code> on it kills the running subprocess.</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>Final result — fires once the subagent process exits. <code>msg.payload</code> = final text output, <code>msg.ralph.result</code> = full result object (messages, usage, exitCode, stopReason).</li>
+    <li>Stream event — fires on every JSON event line while the subagent runs. Wire to a dashboard text/template widget for live progress.</li>
+  </ol>
+</script>

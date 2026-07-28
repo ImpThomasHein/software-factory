@@ -1,0 +1,22 @@
+{
+  "name": "@schreib-magie/ralph-node-red",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Node-RED configuration for orchestrating pi ralph-loop subagents (planner/builder/reviewer/refactor/improver/fixer) over docs/tickets.md.",
+  "scripts": {
+    "start": "node-red -u . flows.json",
+    "init": "node bin/init.js",
+    "test": "node --test"
+  },
+  "node-red": {
+    "nodes": {
+      "ralph-run-agent": "nodes/ralph-run-agent.js",
+      "ralph-discover-agents": "nodes/ralph-discover-agents.js",
+      "ralph-run-verify": "nodes/ralph-run-verify.js"
+    }
+  },
+  "dependencies": {
+    "node-red": "^4.0.9",
+    "node-red-dashboard": "^3.6.5"
+  }
+}

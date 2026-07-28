@@ -1,0 +1,70 @@
+<script type="text/javascript">
+  RED.nodes.registerType('ralph-run-verify', {
+    category: 'ralph-loop',
+    color: '#ffcc66',
+    defaults: {
+      name: { value: '' },
+      command: { value: '' },
+      commandType: { value: 'str' },
+      cwd: { value: '' },
+      cwdType: { value: 'str' },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'font-awesome/fa-check-square-o',
+    label: function () {
+      return this.name || 'run verify';
+    },
+    paletteLabel: 'run verify',
+    oneditprepare: function () {
+      $('#node-input-cwdType').val(this.cwdType || 'str');
+      $('#node-input-commandType').val(this.commandType || 'str');
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="ralph-run-verify">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-command"><i class="fa fa-terminal"></i> Command</label>
+    <input type="text" id="node-input-command" placeholder="leave empty for pnpm build && pnpm test" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-commandType">&nbsp;</label>
+    <select id="node-input-commandType" style="width:70%">
+      <option value="str">fixed command (above)</option>
+      <option value="msg">msg property (path above, e.g. ralph.verifyCommand)</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwd"><i class="fa fa-folder"></i> Repo path</label>
+    <input type="text" id="node-input-cwd" placeholder="leave empty to use msg.ralph.cwd" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwdType">&nbsp;</label>
+    <select id="node-input-cwdType" style="width:70%">
+      <option value="str">fixed path (above)</option>
+      <option value="msg">msg property (path above, e.g. ralph.cwd)</option>
+    </select>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="ralph-run-verify">
+  <p>Runs a configurable shell command (default: <code>pnpm build && pnpm test</code>, mirroring the CI workflow's Build+Test steps) once in the target repo.</p>
+  <h3>Inputs</h3>
+  <dl class="message-properties">
+    <dt>ralph.cwd <span class="property-type">string</span></dt>
+    <dd>Repo root to run the command in — used when "cwd" is set to "msg property" or left empty on the node.</dd>
+    <dt>ralph.verifyCommand <span class="property-type">string</span></dt>
+    <dd>Optional override of the command, e.g. set once from the dashboard's start form.</dd>
+    <dt>ralph.abortController <span class="property-type">AbortController</span></dt>
+    <dd>Optional shared controller; calling <code>.abort()</code> on it kills the running process.</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li><code>msg.payload</code> / <code>msg.ralph.verify</code> = <code>{success, exitCode, output, command, durationMs}</code>.</li>
+  </ol>
+</script>

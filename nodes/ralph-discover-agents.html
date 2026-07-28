@@ -1,0 +1,46 @@
+<script type="text/javascript">
+  RED.nodes.registerType('ralph-discover-agents', {
+    category: 'ralph-loop',
+    color: '#ffcc66',
+    defaults: {
+      name: { value: '' },
+      cwd: { value: '' },
+      cwdType: { value: 'str' },
+      requireDefault: { value: true },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'font-awesome/fa-search',
+    label: function () {
+      return this.name || 'discover ralph agents';
+    },
+    paletteLabel: 'discover agents',
+  });
+</script>
+
+<script type="text/html" data-template-name="ralph-discover-agents">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwd"><i class="fa fa-folder"></i> Repo path</label>
+    <input type="text" id="node-input-cwd" placeholder="leave empty to use msg.ralph.cwd" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-cwdType">&nbsp;</label>
+    <select id="node-input-cwdType" style="width:70%">
+      <option value="str">fixed path (above)</option>
+      <option value="msg">msg property (path above, e.g. ralph.cwd)</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-requireDefault" style="width:auto" />
+    <label for="node-input-requireDefault" style="width:auto">require default ralph agents (planner/builder/reviewer/refactor/improver/fixer)</label>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="ralph-discover-agents">
+  <p>Reads all <code>ralph-*.md</code> files under the nearest <code>.pi/agents/</code> directory and outputs their parsed frontmatter + system prompt.</p>
+  <p>Output: <code>msg.payload</code> = array of agent configs, <code>msg.ralph.agents</code> = same array, <code>msg.ralph.cwd</code> = resolved repo path.</p>
+</script>
