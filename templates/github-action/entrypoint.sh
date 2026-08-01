@@ -35,7 +35,7 @@ BATCH_ID=""
 
 # ── Logging ─────────────────────────────────────────────
 log()  { echo "[factory] $(date -Iseconds) $*"; }
-fail() { log "ERROR: $*"; exit 1; }
+fail() { log "ERROR: $*"; kill "$NODERED_PID" 2>/dev/null; exit 1; }
 
 # ── Git helpers ─────────────────────────────────────────
 ensure_batch_branch() {
