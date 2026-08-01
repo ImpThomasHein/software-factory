@@ -258,11 +258,9 @@ poll_status() {
 main() {
   log "Software Factory starting — repo: ${REPO:-unknown}, source: $TASK_SOURCE"
 
-  # gh CLI reads GITHUB_TOKEN from env — no login step needed
+  # gh CLI reads GH_TOKEN / GITHUB_TOKEN from env
   if [ -n "$GITHUB_TOKEN" ]; then
     export GH_TOKEN="$GITHUB_TOKEN"
-    # Set up git for commit/push
-    gh auth setup-git 2>/dev/null || true
     git config user.email "ralph[bot]@users.noreply.github.com"
     git config user.name "Ralph Loop"
   fi
