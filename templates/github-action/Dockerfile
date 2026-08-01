@@ -1,11 +1,14 @@
-# Software Factory — Docker Image
+# Software Factory — Docker Image (for target projects)
 # Node-RED + pi CLI (Oh My Pi) + Ralph Loop orchestration
+#
+# This is the template Dockerfile shipped to every project via `npm run init`.
+# It references the `factory/` subdirectory where the Node-RED runtime is copied.
 #
 # Build:
 #   docker build -t software-factory .
 #
 # Run locally:
-#   docker run --rm -e GITHUB_TOKEN -e LLM_API_KEY -e RALPH_BATCH_LABEL=ralph:batch-1 software-factory
+#   docker run --rm -e GITHUB_TOKEN -e LLM_API_KEY software-factory
 
 FROM node:20-slim
 
@@ -27,35 +30,20 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     && rm -rf /var/lib/apt/lists/*
 
 # ── pi CLI (Oh My Pi) ────────────────────────────────────────────
-# The pi CLI is the agent runner invoked by ralph-loop as:
-#   pi --mode json -p --no-session --model <model> --tools <tools>
-#
-# INSTALL INSTRUCTIONS (adjust to your pi distribution method):
-#   Option A: Copy pre-built binary
-#     COPY pi /usr/local/bin/pi
-#   Option B: Download from release
-#     ADD https://your-release-url/pi-linux-amd64 /usr/local/bin/pi
-#   Option C: Install via pipx
-#     RUN pipx install oh-my-pi
-#   Option D: Build from source
-#     RUN git clone <pi-repo> /tmp/pi && cd /tmp/pi && ./install.sh
-#
-# For now, place your pi binary or install method here:
-# ──────────────────────────────────────────────────────────────────
 # >>> PLACEHOLDER: install pi CLI here <<<
 # ──────────────────────────────────────────────────────────────────
 
 WORKDIR /app
 
-# Copy package files and install Node-RED + dependencies
-COPY package.json package-lock.json ./
+# Copy package files from factory/ subdirectory and install Node-RED
+COPY factory/package.json factory/package-lock.json ./
 RUN npm ci --omit=dev
 
-# Copy application code
-COPY lib/ ./lib/
-COPY nodes/ ./nodes/
-COPY templates/ ./templates/
-COPY flows.json settings.js ./
+# Copy application code from factory/ subdirectory
+COPY factory/lib/ ./lib/
+COPY factory/nodes/ ./nodes/
+COPY factory/templates/ ./templates/
+COPY factory/flows.json factory/settings.js ./
 
 # Entrypoint
 COPY entrypoint.sh /entrypoint.sh
@@ -67,6 +55,4 @@ EXPOSE 1880
 ENV NODE_ENV=production
 ENV PORT=1880
 
-# The entrypoint runs one ticket from discovery to completion, then exits.
-# It is designed to be called once per GitHub Actions workflow_dispatch.
 ENTRYPOINT ["/entrypoint.sh"]
