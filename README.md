@@ -1,15 +1,30 @@
-# Ralph Loop — Node-RED Konfiguration
+# Software Factory — Ralph Loop (Node-RED)
 
-Node-RED-Ersatz für die `.pi/extensions/ralph-loop`-TUI-Extension. Orchestriert
-dieselbe Agenten-Pipeline (Planner → Builder → Reviewer, mit Fixer-Retries und
-periodischem Refactor/Improve) über `docs/tickets.md`, aber als visuell
-editierbarer Flow statt TypeScript-Extension.
+Node-RED-basierte Pipeline-Orchestrierung für den Ralph Loop: Plant → Build →
+Review → Fixer-Retries → Verify. Läuft lokal als Dashboard **und** als
+GitHub Action in CI.
 
-Die `.pi/extensions/ralph-loop/`-Extension bleibt vorerst parallel bestehen
-(`/ralph <N>` funktioniert weiter im pi-TUI). Dieses Paket ist der neue,
-erweiterbare Weg, denselben Loop zu konfigurieren und zu starten.
+## Schnellstart (GitHub Action)
 
-## Schnellstart
+1. **`npm run init`** kopiert alle Action-Dateien ins Zielprojekt:
+   ```bash
+   npm run init -- --repo C:/pfad/zum/projekt
+   ```
+   Erstellt `action.yml`, `Dockerfile`, `entrypoint.sh`, `.dockerignore`,
+   `.github/workflows/software-factory.yml` sowie den `factory/`-Ordner mit
+   der Node-RED-Runtime.
+
+2. **Issue labeln:** `ralph:task` auf ein GitHub Issue → Pipeline startet
+   automatisch (via `issues: [labeled]` Trigger). Optional: `ralph:batch-<id>`
+   für Multi-Ticket-Branches.
+
+3. **Manuell triggern:** `Actions → Software Factory → Run workflow` mit
+   Parametern wie `max_iterations`, `task_source`, `batch_label`.
+
+4. **Self-hosted Runner:** Container `myoung34/github-runner` mit
+   Docker-Socket-Zugriff. Registriert pro Repo.
+
+## Schnellstart (lokal / Dashboard)
 
 Voraussetzung: `pi` CLI im PATH, `git`, Node 18+.
 
@@ -56,26 +71,28 @@ Voraussetzung: `pi` CLI im PATH, `git`, Node 18+.
 ## Architektur
 
 ```
-packages/ralph-node-red/
+software-factory/
   lib/            reine Logik, 1:1 aus .pi/extensions/ralph-loop portiert
                   (tickets, verdict, progress, discovery, tasks, spawn, git, ...)
-  nodes/          zwei generische Custom Nodes:
-                  - ralph-run-agent      spawnt `pi --mode json -p --no-session`
-                                         für einen benannten ralph-*.md Agenten
-                  - ralph-discover-agents liest .pi/agents/ralph-*.md ein
-  flows.json      der eigentliche Orchestrierungs-Flow (Tab "Ralph Loop")
-  settings.js     Node-RED Runtime-Settings; stellt `lib/*` global bereit
-                  (Function-Node-Sandbox erlaubt kein `require()`)
-  templates/      generische Basis-Dateien + Skills für neue Projekte
-                  (siehe Wiederverwendbarkeit)
-  bin/init.js     Scaffolding-Skript (`npm run init`)
+  nodes/          Custom Nodes für Node-RED:
+                  - ralph-run-agent        spawnt `pi --mode json -p --no-session`
+                  - ralph-discover-agents  liest .pi/agents/ralph-*.md ein
+                  - ralph-run-verify       führt verify_command aus
+  flows.json      Orchestrierungs-Flow (Tabs: Loop, Start, Meta, Telemetry, Finish)
+  settings.js     Node-RED Runtime-Settings
+  templates/      Basis-Dateien für `npm run init`:
+                  - github-action/  → .github/workflows/, action.yml, Dockerfile
+                  - agents/         → .pi/agents/ralph-*.md
+                  - skills/         → .pi/skills/
+                  - system-prompt.md, anforderungen.md, glossar.md, spec.md
+  bin/init.js     Scaffolding-Skript (`npm run init`) — kopiert Templates + factory/
   test/           node:test — Unit-Tests für die reine Logik in lib/
 ```
 
-Jeder `ralph-run-agent`-Node ist unabhängig konfigurierbar (Agent-Name, Model-
-Override, Tools-Override, cwd) und im Editor frei verdrahtbar — neue Agenten
-oder ein anderer Pipeline-Ablauf lassen sich per Drag&Drop im Flow ändern,
-ohne TypeScript anzufassen.
+Im Zielprojekt nach `npm run init`:
+- `action.yml`, `Dockerfile`, `entrypoint.sh`, `.dockerignore` im Root
+- `.github/workflows/software-factory.yml`
+- `factory/`-Ordner mit Node-RED Runtime (flows.json, settings.js, lib/, nodes/, templates/, package.json)
 
 ## Verify-Task & ralph-ci-fixer (Loop-Ende)
 
@@ -109,22 +126,24 @@ Versuche, `RALPH_VERIFY_MAX_ATTEMPTS`-Env-Var). Das Endergebnis
 
 | Datei | Zweck |
 |-------|-------|
-| `templates/system-prompt.md` | Generischer Shared-Prompt, der allen Subagenten vorangestellt wird, falls das Zielprojekt keine eigene `.pi/ralph-loop/system-prompt.md` hat. |
-| `templates/anforderungen.md` | Basis-Vorlage für `docs/anforderungen.md` (fachliche Anforderungen). |
-| `templates/glossar.md` | Basis-Vorlage für `docs/glossar.md` (Fachbegriffe/Abkürzungen). |
-| `templates/spec.md` | Basis-Vorlage für `docs/spec.md` im Format des `to-spec`-Skills (Problem Statement, User Stories, Implementation/Testing Decisions). |
-| `templates/agents/ralph-*.md` | Die acht Standard-Subagenten (planner/builder/reviewer/fixer/refactor/improver/summary/ci-fixer), siehe [Agenten](#agenten). |
+| `templates/github-action/*` | GitHub Action: `action.yml`, `Dockerfile`, `entrypoint.sh`, `.dockerignore`, `.github/workflows/software-factory.yml` — für CI-Pipeline. |
+| `templates/system-prompt.md` | Generischer Shared-Prompt, der allen Subagenten vorangestellt wird. |
+| `templates/anforderungen.md` | Basis-Vorlage für `docs/anforderungen.md`. |
+| `templates/glossar.md` | Basis-Vorlage für `docs/glossar.md`. |
+| `templates/spec.md` | Basis-Vorlage für `docs/spec.md`. |
+| `templates/agents/ralph-*.md` | Die acht Standard-Subagenten (planner/builder/reviewer/fixer/refactor/improver/summary/ci-fixer). |
 
 **Fallback-Verhalten:** `lib/tasks.js#loadSharedPrompt` lädt zuerst die
 projekteigene `.pi/ralph-loop/system-prompt.md`; existiert sie nicht oder ist
 leer, wird automatisch `templates/system-prompt.md` verwendet. So läuft die
 Pipeline auch in einem frischen Repo ohne weitere Konfiguration.
-
 **Neues Projekt aufsetzen:** `npm run init [-- --repo <pfad>]` kopiert die
-Basis-Dateien in das Zielprojekt (`.pi/ralph-loop/system-prompt.md`,
-`docs/anforderungen.md`, `docs/glossar.md`, `docs/spec.md`), die benötigten
-Skills nach `.pi/skills/` sowie alle `ralph-*.md`-Agenten nach `.pi/agents/`,
-sofern dort noch keine eigenen Versionen existieren. Bestehende Dateien
+Basis-Dateien ins Zielprojekt:
+- `.github/` — GitHub Action für CI (Workflow + Docker-Image)
+- `action.yml`, `Dockerfile`, `entrypoint.sh`, `.dockerignore` im Root
+- `factory/` — Node-RED Runtime (flows.json, settings.js, lib/, nodes/, templates/)
+- `.pi/ralph-loop/system-prompt.md`, `docs/` (Anforderungen, Glossar, Spec)
+- `.pi/skills/`, `.pi/agents/ralph-*.md`
 werden nie überschrieben — das Skript füllt nur, was fehlt.
 
 ### Agenten
