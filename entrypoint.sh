@@ -207,6 +207,9 @@ discover_task_from_markdown() {
 # ── Step 1: Start Node-RED ──────────────────────────────
 start_nodered() {
   log "Starting Node-RED on port ${PORT:-1880}..."
+  # pi CLI needs provider-specific API key env vars
+  export OPENROUTER_API_KEY="${LLM_API_KEY:-}"
+  export DEEPSEEK_API_KEY="${LLM_API_KEY:-}"
   RALPH_REPO_ROOT="${GITHUB_WORKSPACE:-/github/workspace}" \
   /app/node_modules/.bin/node-red -u /app /app/flows.json \
     -D uiPort="${PORT:-1880}" \
