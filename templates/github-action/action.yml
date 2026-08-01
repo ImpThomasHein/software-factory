@@ -1,0 +1,77 @@
+name: "Software Factory (Ralph Loop)"
+description: "AI-driven ticket processing pipeline — one task per run"
+author: "Software Factory"
+
+branding:
+  icon: "cpu"
+  color: "purple"
+
+inputs:
+  task_source:
+    description: "Task source: 'issues' (GitHub Issues) or 'markdown' (tickets.md)"
+    required: false
+    default: "issues"
+
+  issue_label:
+    description: "GitHub label to filter task issues"
+    required: false
+    default: "ralph:task"
+
+  batch_label:
+    description: "Optional batch label to group multiple tickets (e.g. 'ralph:batch-42')"
+    required: false
+    default: ""
+
+  task_issue_number:
+    description: "Specific issue number to process (overrides discovery)"
+    required: false
+    default: ""
+
+  tickets_path:
+    description: "Path to tickets.md (when task_source=markdown)"
+    required: false
+    default: "docs/tickets.md"
+
+  max_iterations:
+    description: "Fixer retries per ticket (1 = planner→builder→reviewer, 2-3 adds re-review cycles)"
+    required: false
+    default: "1"
+
+  target_branch:
+    description: "Base branch for the PR"
+    required: false
+    default: "main"
+
+  verify_command:
+    description: "Shell command to run after builder (build + test)"
+    required: false
+    default: "pnpm build && pnpm test"
+
+  pi_model:
+    description: "LLM model override for pi CLI"
+    required: false
+    default: ""
+
+  pi_tools:
+    description: "Comma-separated tool list for pi CLI"
+    required: false
+    default: ""
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  env:
+    INPUT_TASK_SOURCE: ${{ inputs.task_source }}
+    INPUT_ISSUE_LABEL: ${{ inputs.issue_label }}
+    INPUT_BATCH_LABEL: ${{ inputs.batch_label }}
+    INPUT_TASK_ISSUE_NUMBER: ${{ inputs.task_issue_number }}
+    INPUT_TICKETS_PATH: ${{ inputs.tickets_path }}
+    INPUT_MAX_ITERATIONS: ${{ inputs.max_iterations }}
+    INPUT_TARGET_BRANCH: ${{ inputs.target_branch }}
+    INPUT_VERIFY_COMMAND: ${{ inputs.verify_command }}
+    INPUT_PI_MODEL: ${{ inputs.pi_model }}
+    INPUT_PI_TOOLS: ${{ inputs.pi_tools }}
+    GITHUB_TOKEN: ${{ github.token }}
+    GITHUB_REPOSITORY: ${{ github.repository }}
+    GITHUB_WORKSPACE: ${{ github.workspace }}
+    LLM_API_KEY: ${{ secrets.LLM_API_KEY }}

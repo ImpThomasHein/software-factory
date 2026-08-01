@@ -1,0 +1,102 @@
+name: "Software Factory — Single Task"
+
+# Run one task per invocation. Chains via repository_dispatch.
+# Usage:
+#   1. Label issues with "ralph:task" (and optionally "ralph:batch-<id>" for grouping).
+#   2. Trigger manually: gh workflow run software-factory.yml -f batch_label=ralph:batch-42
+#   3. Each run processes one issue, commits to ralph/<batch>, dispatches next.
+#   4. When all issues are done, a PR is created automatically.
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task_source:
+        description: "Task source"
+        required: false
+        default: "issues"
+        type: choice
+        options:
+          - issues
+          - markdown
+      batch_label:
+        description: "Batch label for grouping (e.g. ralph:batch-42)"
+        required: false
+        default: ""
+      issue_label:
+        description: "Issue label for task discovery"
+        required: false
+        default: "ralph:task"
+      task_issue_number:
+        description: "Specific issue number (overrides discovery)"
+        required: false
+        default: ""
+      tickets_path:
+        description: "Path to tickets.md (for markdown source)"
+        required: false
+        default: "docs/tickets.md"
+      max_iterations:
+        description: "Fixer retries per task"
+        required: false
+        default: "1"
+      target_branch:
+        description: "Base branch for PR"
+        required: false
+        default: "main"
+      verify_command:
+        description: "Build/test command"
+        required: false
+        default: "pnpm build && pnpm test"
+  repository_dispatch:
+    types: [ralph-task-completed]
+
+jobs:
+  factory:
+    runs-on: self-hosted
+    timeout-minutes: 120
+    # Only run on issue events when ralph:task or ralph:batch-* label is added
+    if: |
+      github.event_name != 'issues' ||
+      github.event.label.name == 'ralph:task' ||
+      startsWith(github.event.label.name, 'ralph:batch')
+    steps:
+      - name: Resolve inputs (issue trigger)
+        id: inputs
+        if: github.event_name == 'issues'
+        run: |
+          echo "task_issue_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          BATCH_LABEL=$(echo '${{ toJSON(github.event.issue.labels.*.name) }}' | jq -r '.[] | select(startswith("ralph:batch")) | sub("^ralph:"; "")' | head -1)
+          if [ -n "$BATCH_LABEL" ]; then
+            echo "batch_label=$BATCH_LABEL" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch || 'main' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          path: repo
+
+      - name: Build and run Software Factory
+        run: |
+          cd "$GITHUB_WORKSPACE/repo"
+          docker build -t software-factory .
+          docker run --rm \
+            -e GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
+            -e LLM_API_KEY="${{ secrets.LLM_API_KEY }}" \
+            -e GITHUB_REPOSITORY="${{ github.repository }}" \
+            -e GITHUB_WORKSPACE="/github/workspace" \
+            -e INPUT_TASK_SOURCE="${{ github.event.inputs.task_source || 'issues' }}" \
+            -e INPUT_BATCH_LABEL="${{ steps.inputs.outputs.batch_label || github.event.inputs.batch_label || '' }}" \
+            -e INPUT_ISSUE_LABEL="${{ github.event.inputs.issue_label || 'ralph:task' }}" \
+            -e INPUT_TASK_ISSUE_NUMBER="${{ steps.inputs.outputs.task_issue_number || github.event.inputs.task_issue_number || '' }}" \
+            -e INPUT_TICKETS_PATH="${{ github.event.inputs.tickets_path || 'docs/tickets.md' }}" \
+            -e INPUT_MAX_ITERATIONS="${{ github.event.inputs.max_iterations || '1' }}" \
+            -e INPUT_TARGET_BRANCH="${{ github.event.inputs.target_branch || 'main' }}" \
+            -e INPUT_VERIFY_COMMAND="${{ github.event.inputs.verify_command || 'pnpm build && pnpm test' }}" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$GITHUB_WORKSPACE/repo:/github/workspace" \
+            -w /github/workspace \
+            software-factory
