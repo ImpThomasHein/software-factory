@@ -15,6 +15,8 @@ LABEL org.opencontainers.image.description="Software Factory: AI-driven ticket p
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     jq \
+    curl \
+    gnupg \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
