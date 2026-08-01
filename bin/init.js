@@ -28,10 +28,10 @@ const SCAFFOLD_FILES = [
   { template: "glossar.md", target: path.join("docs", "glossar.md") },
   { template: "spec.md", target: path.join("docs", "spec.md") },
   // GitHub Action files — shipped so every project can run Ralph Loop in CI
-  { template: path.join("github-action", "action.yml"), target: path.join(".github", "action.yml") },
-  { template: path.join("github-action", "Dockerfile"), target: path.join(".github", "Dockerfile") },
-  { template: path.join("github-action", "entrypoint.sh"), target: path.join(".github", "entrypoint.sh") },
-  { template: path.join("github-action", ".dockerignore"), target: path.join(".github", ".dockerignore") },
+  { template: path.join("github-action", "action.yml"), target: "action.yml" },
+  { template: path.join("github-action", "Dockerfile"), target: "Dockerfile" },
+  { template: path.join("github-action", "entrypoint.sh"), target: "entrypoint.sh" },
+  { template: path.join("github-action", ".dockerignore"), target: ".dockerignore" },
   { template: path.join("github-action", "workflows", "software-factory.yml"), target: path.join(".github", "workflows", "software-factory.yml") },
 ];
 
