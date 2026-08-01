@@ -77,17 +77,26 @@ jobs:
           ref: ${{ github.event.inputs.target_branch || 'main' }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          path: repo
 
-      - name: Run Ralph Loop
-        uses: ./
-        with:
-          task_source: ${{ github.event.inputs.task_source || 'issues' }}
-          batch_label: ${{ steps.inputs.outputs.batch_label || github.event.inputs.batch_label || '' }}
-          issue_label: ${{ github.event.inputs.issue_label || 'ralph:task' }}
-          task_issue_number: ${{ steps.inputs.outputs.task_issue_number || github.event.inputs.task_issue_number || '' }}
-          tickets_path: ${{ github.event.inputs.tickets_path || 'docs/tickets.md' }}
-          max_iterations: ${{ github.event.inputs.max_iterations || '1' }}
-          target_branch: ${{ github.event.inputs.target_branch || 'main' }}
-          verify_command: ${{ github.event.inputs.verify_command || 'pnpm build && pnpm test' }}
-        env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      - name: Build and run Software Factory
+        run: |
+          cd "$GITHUB_WORKSPACE/repo"
+          docker build -t software-factory .
+          docker run --rm \
+            -e GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
+            -e LLM_API_KEY="${{ secrets.LLM_API_KEY }}" \
+            -e GITHUB_REPOSITORY="${{ github.repository }}" \
+            -e GITHUB_WORKSPACE="/github/workspace" \
+            -e INPUT_TASK_SOURCE="${{ github.event.inputs.task_source || 'issues' }}" \
+            -e INPUT_BATCH_LABEL="${{ steps.inputs.outputs.batch_label || github.event.inputs.batch_label || '' }}" \
+            -e INPUT_ISSUE_LABEL="${{ github.event.inputs.issue_label || 'ralph:task' }}" \
+            -e INPUT_TASK_ISSUE_NUMBER="${{ steps.inputs.outputs.task_issue_number || github.event.inputs.task_issue_number || '' }}" \
+            -e INPUT_TICKETS_PATH="${{ github.event.inputs.tickets_path || 'docs/tickets.md' }}" \
+            -e INPUT_MAX_ITERATIONS="${{ github.event.inputs.max_iterations || '1' }}" \
+            -e INPUT_TARGET_BRANCH="${{ github.event.inputs.target_branch || 'main' }}" \
+            -e INPUT_VERIFY_COMMAND="${{ github.event.inputs.verify_command || 'pnpm build && pnpm test' }}" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$GITHUB_WORKSPACE/repo:/github/workspace" \
+            -w /github/workspace \
+            software-factory
