@@ -271,7 +271,7 @@ main() {
   if [ -n "$TASK_ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
     # Specific issue number provided (e.g. from workflow_dispatch input)
     local issue_body
-    issue_body=$(gh issue view "$TASK_ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null || echo "")
+    issue_body=$(gh issue view "$TASK_ISSUE_NUMBER" -R "$REPO" --json body --jq '.body' 2>/dev/null || echo "")
     if [ -z "$issue_body" ]; then
       fail "Issue #${TASK_ISSUE_NUMBER} not found or empty"
     fi
