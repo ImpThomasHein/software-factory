@@ -27,23 +27,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     && rm -rf /var/lib/apt/lists/*
 
 # ── pi CLI (Oh My Pi) ────────────────────────────────────────────
-# The pi CLI is the agent runner invoked by ralph-loop as:
-#   pi --mode json -p --no-session --model <model> --tools <tools>
-#
-# INSTALL INSTRUCTIONS (adjust to your pi distribution method):
-#   Option A: Copy pre-built binary
-#     COPY pi /usr/local/bin/pi
-#   Option B: Download from release
-#     ADD https://your-release-url/pi-linux-amd64 /usr/local/bin/pi
-#   Option C: Install via pipx
-#     RUN pipx install oh-my-pi
-#   Option D: Build from source
-#     RUN git clone <pi-repo> /tmp/pi && cd /tmp/pi && ./install.sh
-#
-# For now, place your pi binary or install method here:
-# ──────────────────────────────────────────────────────────────────
-# >>> PLACEHOLDER: install pi CLI here <<<
-# ──────────────────────────────────────────────────────────────────
+RUN npm install -g @earendil-works/pi-coding-agent \
+    && npm install -g pnpm
 
 WORKDIR /app
 

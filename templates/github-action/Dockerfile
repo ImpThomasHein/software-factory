@@ -30,8 +30,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     && rm -rf /var/lib/apt/lists/*
 
 # ── pi CLI (Oh My Pi) ────────────────────────────────────────────
-# >>> PLACEHOLDER: install pi CLI here <<<
-# ──────────────────────────────────────────────────────────────────
+RUN npm install -g @earendil-works/pi-coding-agent \
+    && npm install -g pnpm
 
 WORKDIR /app
 
