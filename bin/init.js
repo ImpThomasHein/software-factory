@@ -20,6 +20,7 @@ const path = require("node:path");
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
 const TEMPLATES_SKILLS_DIR = path.join(TEMPLATES_DIR, "skills");
 const TEMPLATES_AGENTS_DIR = path.join(TEMPLATES_DIR, "agents");
+const FACTORY_ROOT = path.join(__dirname, "..");
 
 /** @type {Array<{ template: string, target: string }>} */
 const SCAFFOLD_FILES = [
@@ -33,6 +34,21 @@ const SCAFFOLD_FILES = [
   { template: path.join("github-action", "entrypoint.sh"), target: "entrypoint.sh" },
   { template: path.join("github-action", ".dockerignore"), target: ".dockerignore" },
   { template: path.join("github-action", "workflows", "software-factory.yml"), target: path.join(".github", "workflows", "software-factory.yml") },
+];
+
+/** Node-RED runtime files copied from the factory root — needed for the Docker build. */
+const FACTORY_RUNTIME_FILES = [
+  "flows.json",
+  "settings.js",
+  "package.json",
+  "package-lock.json",
+];
+
+/** Directories copied recursively from factory root. */
+const FACTORY_RUNTIME_DIRS = [
+  "lib",
+  "nodes",
+  "templates",
 ];
 
 // Skills the ralph-loop agents (planner/builder/reviewer/...) rely on by name in their
@@ -93,6 +109,28 @@ function scaffold(repoRoot) {
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
     fs.copyFileSync(path.join(TEMPLATES_DIR, template), targetPath);
     results.push({ target, status: "created" });
+  }
+
+  // Copy Node-RED runtime into factory/ subdirectory (avoids conflict with app package.json)
+  const factoryDir = path.join(repoRoot, "factory");
+  fs.mkdirSync(factoryDir, { recursive: true });
+  for (const file of FACTORY_RUNTIME_FILES) {
+    const targetPath = path.join(factoryDir, file);
+    if (fs.existsSync(targetPath)) {
+      results.push({ target: path.join("factory", file), status: "skipped (exists)" });
+      continue;
+    }
+    fs.copyFileSync(path.join(FACTORY_ROOT, file), targetPath);
+    results.push({ target: path.join("factory", file), status: "created" });
+  }
+  for (const dir of FACTORY_RUNTIME_DIRS) {
+    const targetPath = path.join(factoryDir, dir);
+    if (fs.existsSync(targetPath)) {
+      results.push({ target: path.join("factory", dir), status: "skipped (exists)" });
+      continue;
+    }
+    copyDirRecursive(path.join(FACTORY_ROOT, dir), targetPath);
+    results.push({ target: path.join("factory", dir), status: "created" });
   }
   for (const skill of REQUIRED_SKILLS) {
     const target = path.join(".pi", "skills", skill);
