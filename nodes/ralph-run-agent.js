@@ -134,8 +134,9 @@ module.exports = function (RED) {
           `[ralph-debug] start ${agentName} iter=${iteration} model=${effectiveAgent.model || "default"} ` +
           `tools=${(effectiveAgent.tools || []).join(",") || "default"} cwd=${cwd} promptChars=${task.length}`
         );
+        node.log(`[ralph-debug] prompt ${agentName}:\n${task}`);
 
-        // Log the full task prompt for debugging
+        // Save prompt to file log as well
         await writeAgentLog(logDir, iteration, ticket?.id, agentName, `# Prompt (${task.length} chars)\n\n${task}\n\n---\n`);
 
         // Per-call AbortController wired to an optional shared signal passed via msg.ralph.abortController.
