@@ -132,9 +132,12 @@ module.exports = function (RED) {
 
         node.log(
           `[ralph-debug] start ${agentName} iter=${iteration} model=${effectiveAgent.model || "default"} ` +
-          `tools=${(effectiveAgent.tools || []).join(",") || "default"} cwd=${cwd} promptChars=${task.length}`
+          `tools=${(effectiveAgent.tools || []).join(",") || "default"} cwd=${cwd} promptChars=${task.length} ` +
+          `systemPromptChars=${(effectiveAgent.systemPrompt || "").length}`
         );
-        node.log(`[ralph-debug] prompt ${agentName}:\n${task}`);
+        if (effectiveAgent.systemPrompt) {
+          node.log(`[ralph-debug] system-prompt ${agentName}:\n${effectiveAgent.systemPrompt}`);
+        }
 
         // Save prompt to file log as well
         await writeAgentLog(logDir, iteration, ticket?.id, agentName, `# Prompt (${task.length} chars)\n\n${task}\n\n---\n`);
