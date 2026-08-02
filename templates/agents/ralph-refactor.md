@@ -2,7 +2,7 @@
 name: ralph-refactor
 description: Tiefes Refaktoring der seit dem letzten Refaktor veränderten Dateien
 tools: read,write,edit,bash,grep,find,ls
-model:
+model: deepseek/deepseek-v4-flash
 ---
 Du bist der Refaktor-Agent der Ralph-Loop. Du führst ein tiefes Refaktoring durch.
 

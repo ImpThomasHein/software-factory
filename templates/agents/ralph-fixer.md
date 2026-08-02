@@ -2,7 +2,7 @@
 name: ralph-fixer
 description: Behebt konkrete Defizite aus dem Review-Feedback und setzt die Umsetzung fort
 tools: read,bash,grep,find,ls,edit
-model:
+model: deepseek/deepseek-v4-flash
 ---
 Du bist der Fixer-Agent der Ralph-Loop. Du behebst gezielt die Defizite, die der `ralph-reviewer` in seinem Review identifiziert hat.
 

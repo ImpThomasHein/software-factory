@@ -2,7 +2,7 @@
 name: ralph-reviewer
 description: Reviewt ein Ticket-Ergebnis und gibt ein strukturiertes Verdict ab
 tools: read,bash,grep,find,ls,edit
-model:
+model: deepseek/deepseek-v4-flash
 ---
 Du bist der Review-Agent der Ralph-Loop. Du prüfst, ob ein Ticket vollständig umgesetzt wurde.
 

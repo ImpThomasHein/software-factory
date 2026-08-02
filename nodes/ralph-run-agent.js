@@ -135,6 +135,9 @@ module.exports = function (RED) {
           `tools=${(effectiveAgent.tools || []).join(",") || "default"} cwd=${cwd} promptChars=${task.length}`
         );
 
+        // Log the full task prompt for debugging
+        await writeAgentLog(logDir, iteration, ticket?.id, agentName, `# Prompt (${task.length} chars)\n\n${task}\n\n---\n`);
+
         // Per-call AbortController wired to an optional shared signal passed via msg.ralph.abortController.
         const ac = new AbortController();
         const upstream = msg?.ralph?.abortController;
@@ -154,10 +157,13 @@ module.exports = function (RED) {
             ralph: { ...msg.ralph, agentName, cwd },
           }]);
         }, (inv) => {
+          // Log exact pi command to console and debug sidebar
+          const cmdLine = `${inv.command} ${inv.args.join(" ")}`;
+          node.log(`[ralph-debug] invoke ${agentName}: ${cmdLine}`);
           publishToDebugSidebar(
             node,
             `invoke → ${agentName} (iter ${iteration})`,
-            `${inv.command} ${inv.args.join(" ")}\n\ncwd: ${inv.cwd}\nmodel: ${inv.model || "default"}\ntools: ${(inv.tools || []).join(", ") || "default"}`,
+            `${cmdLine}\n\ncwd: ${inv.cwd}\nmodel: ${inv.model || "default"}\ntools: ${(inv.tools || []).join(", ") || "default"}`,
           );
         });
 
