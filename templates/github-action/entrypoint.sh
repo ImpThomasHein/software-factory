@@ -240,12 +240,15 @@ poll_status() {
 
   while [ $waited -lt $max_wait ]; do
     local status
-    status=$(curl -s "http://localhost:${PORT:-1880}/ralph/status" 2>/dev/null || echo '{"running":true}')
+    status=$(curl -s --max-time 10 "http://localhost:${PORT:-1880}/ralph/status" 2>/dev/null || echo '{"running":true}')
 
-    local running
+    local running has_result
     running=$(echo "$status" | jq -r '.running // true' 2>/dev/null)
+    has_result=$(echo "$status" | jq -r 'if .result == null then "no" else "yes" end' 2>/dev/null)
 
-    if [ "$running" != "true" ]; then
+    # Belt-and-braces: end the poll when the loop flag flips OR a final result
+    # object exists — covers any path that forgets to clear ralphLoopRunning.
+    if [ "$running" != "true" ] || [ "$has_result" = "yes" ]; then
       log "Loop finished after ${waited}s. Result:"
       echo "$status" | jq '.'
       return 0
