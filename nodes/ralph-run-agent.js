@@ -168,8 +168,16 @@ module.exports = function (RED) {
           );
         });
 
-        const failed = result.exitCode !== 0 || result.stopReason === "aborted";
+        const failed = result.exitCode !== 0 || result.stopReason === "aborted" || result.stopReason === "error";
+
         pushStatus(node, { fill: failed ? "red" : "green", shape: "dot" }, `${agentName} done in ${Math.round((Date.now() - startedAt) / 1000)}s`);
+
+        // Critical failure on planner: abort the entire loop
+        if (failed && agentName === "ralph-planner") {
+          const err = new Error(`Planner failed: exit=${result.exitCode} error=${result.errorMessage || "unknown"}`);
+          done(err);
+          return;
+        }
 
         // Guarantee: every agent run ends up with a "## Summary" section, even if the
         // agent ignored the instruction appended to its task (see lib/tasks.js). This
@@ -184,8 +192,8 @@ module.exports = function (RED) {
 
         node.log(
           `[ralph-debug] end ${agentName} iter=${iteration} exit=${result.exitCode} stop=${result.stopReason || "-"} ` +
-          `durationMs=${result.durationMs} turns=${result.usage.turns} in=${result.usage.input} out=${result.usage.output} ` +
-          `cost=${result.usage.cost.toFixed(4)}${result.errorMessage ? ` error=${result.errorMessage.slice(0, 200)}` : ""}`
+          `durationMs=${result.durationMs} turns=${result.usage?.turns ?? 0} in=${result.usage?.input ?? 0} out=${result.usage?.output ?? 0} ` +
+          `cost=${(result.usage?.cost ?? 0).toFixed(4)}${result.errorMessage ? ` error=${result.errorMessage.slice(0, 200)}` : ""}`
         );
 
         // Best-effort: never let logging failures break the loop.
