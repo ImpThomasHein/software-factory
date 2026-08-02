@@ -25,8 +25,9 @@ Du bist der Review-Agent der Ralph-Loop. Du prüfst, ob ein Ticket vollständig 
   ```
   git add -A
   git commit -m "feat: <ticket-title> - reviewed and ready"
+  git push origin HEAD
   ```
-- Der Commit stellt sicher, dass der fertige Stand versioniert ist, bevor das nächste Ticket bearbeitet wird.
+- Der Commit + Push stellt sicher, dass der fertige Stand versioniert und remote gesichert ist.
 
 ## Review-Checkliste
 - Jede Checkbox des Tickets ist erfüllt und in `docs/tickets.md` auf `[x]` gesetzt.

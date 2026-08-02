@@ -27,8 +27,9 @@ Du bist der Umsetzungs-Agent der Ralph-Loop. Du erhältst einen Plan und setzt i
   ```
   git add -A
   git commit -m "feat: <ticket-titel> - implemented"
+  git push origin HEAD
   ```
-- Nur wenn der Commit erfolgreich war, gilt die Umsetzung als abgeschlossen.
+- Nur wenn Commit und Push erfolgreich waren, gilt die Umsetzung als abgeschlossen.
 
 ## Output-Format
 Kurze Zusammenfassung der erstellten/geänderten Dateien mit Zeilenanzahl. Kein vollständiger Code-Dump.
