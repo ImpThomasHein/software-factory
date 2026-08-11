@@ -194,19 +194,8 @@ discover_task_from_issues() {
 discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
   if [ ! -f "$tickets_path" ]; then
-    # Restore from base64-encoded TICKETS_CONTENT_B64 env var
-    if [ -n "${TICKETS_CONTENT_B64:-}" ]; then
-      mkdir -p "$(dirname "$tickets_path")" 2>/dev/null || true
-      echo "$TICKETS_CONTENT_B64" | base64 -d > "$tickets_path" 2>/dev/null || true
-      if [ ! -f "$tickets_path" ] || [ ! -s "$tickets_path" ]; then
-        log "ERROR: Failed to decode TICKETS_CONTENT_B64"
-        return 1
-      fi
-      log "Restored $tickets_path from TICKETS_CONTENT_B64 env var"
-    else
-      log "No tickets file found at $tickets_path and no TICKETS_CONTENT_B64 set"
-      return 1
-    fi
+    log "ERROR: tickets file not found at $tickets_path"
+    return 1
   fi
 
   log "Parsing $tickets_path for frontier ticket"
@@ -215,7 +204,6 @@ discover_task_from_markdown() {
   TASK="__FROM_FILE__:$tickets_path"
   return 0
 }
-
 # ── Step 1: Start Node-RED ──────────────────────────────
 start_nodered() {
   log "Starting Node-RED on port ${PORT:-1880}..."
