@@ -324,3 +324,72 @@ Deckt die reine Logik in `lib/` ab (Ticket-Parsing/Frontier/Done-Marking,
 Verdict-Parsing, Progress-Formatierung) plus einen Regressionstest für
 `runAgent` (stellt sicher, dass `finalOutput` aus dem letzten
 `message_end`-Event befüllt wird).
+
+## Troubleshooting: GitHub Action Setup
+
+Diese Fehler traten beim ersten Setup auf und wurden behoben. Bei neuen Projekten
+diese Punkte vor dem ersten Lauf prüfen:
+
+### 1. `fatal: not in a git directory` im Entrypoint
+
+**Ursache:** `git config` läuft vor `cd` ins Workspace.  
+**Fix:** Im `entrypoint.sh` **vor** `git config` ein `cd "${GITHUB_WORKSPACE:-/github/workspace}"`
+einfügen und `--global` verwenden.  
+**Status:** ✅ In `templates/github-action/entrypoint.sh` behoben.
+
+### 2. `fatal: detected dubious ownership`
+
+**Ursache:** Git-Repo im Docker-Container hat andere UID als der Container-Nutzer.  
+**Fix:** `git config --global --add safe.directory /github/workspace` nach `cd`.  
+**Status:** ✅ Behoben.
+
+### 3. `fatal: 'origin' does not appear to be a git repository`
+
+**Ursache:** Der per `COPY` ins Image gebackene Workspace hat kein Git-Remote.  
+**Fix:** Vor `git fetch`/`git push` mit `git remote set-url` + `gh auth setup-git`
+den Origin mit Token-Auth setzen.  
+**Status:** ✅ Behoben.
+
+### 4. `docs/tickets.md` nicht gefunden
+
+**Ursache:** Der Docker-Container sieht das Repo nicht, weil der Volume-Mount
+`$GITHUB_WORKSPACE/repo:/github/workspace` nicht funktioniert. Der Runner-Container
+hat ein internes Workspace-Verzeichnis, das nicht auf dem Host sichtbar ist.  
+**Lösung (gewählt):** Die Repo-Dateien (`docs/`, `.pi/`, `CLAUDE.md`) werden per
+`COPY` in das Docker-Image gebacken (`Dockerfile.sf`). Kein Volume-Mount nötig.  
+**Alternative:** Runner mit `-v /tmp/runner/work:/tmp/runner/work` starten, sodass
+der Host-Pfad dem Container-Pfad entspricht.  
+**Status:** ✅ Behoben (Bake-Ansatz).
+
+### 5. `.git` wird von `.dockerignore` ausgeschlossen
+
+**Ursache:** `COPY .git/` scheitert, weil das Next.js-`.dockerignore` `.git`
+ausschließt.  
+**Lösung:** `.git` nicht kopieren. Der Entrypoint erkennt das fehlende Repo
+und läuft ohne Git-Integration. Für Push-Support: Repo per `git clone` im
+Container klonen statt per Volume-Mount.  
+**Status:** ✅ Behoben.
+
+### 6. `verify_command` auf `npm` umstellen (nicht `pnpm`)
+
+**Ursache:** Der Default ist `pnpm build && pnpm test`, aber Next.js-Projekte
+nutzen meist `npm`.  
+**Fix:** Beim Workflow-Dispatch `verify_command` auf `npm run build && npm test`
+setzen, oder in `settings.js` den Default anpassen.  
+**Status:** ✅ Workflow-Input gesetzt.
+
+### 7. Runner-Label für dedizierten Zugriff
+
+**Ursache:** `runs-on: self-hosted` matched ALLE Self-Hosted-Runner, inkl.
+z.B. einem Raspberry Pi. Dadurch läuft der Job auf dem falschen Runner.  
+**Fix:** Runner mit Unique-Label starten (`RUNNER_LABELS=self-hosted,linux,x64,docker,finapp`)
+und Workflow auf `runs-on: finapp` umstellen.  
+**Status:** ✅ Behoben.
+
+### 8. Docker-Build-Cache fehlt → 18 Min pro Lauf
+
+**Ursache:** `docker build` ohne Cache-Layer, weil sich Dateien im Kontext ändern.  
+**Lösung:** Pre-built Image (`software-factory:latest`) auf dem Host vorhalten
+und im Workflow nur `docker run` ohne Build verwenden. Dafür muss der Workspace
+per Volume-Mount erreichbar sein (siehe Punkt 4, Alternative).  
+**Status:** ⚠️ Bekannt — aktuell wird bei jedem Lauf neu gebaut.
