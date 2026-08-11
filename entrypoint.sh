@@ -296,6 +296,20 @@ main() {
     git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" 2>/dev/null || true
   fi
 
+  # Docker-in-Docker mount fallback: copy agents and skills from image if missing
+  if [ ! -d ".pi/agents" ] && [ -d "/app/.pi/agents" ]; then
+    mkdir -p .pi
+    cp -r /app/.pi/agents .pi/
+    log "Copied .pi/agents from Docker image (mount fallback)"
+  fi
+  if [ -d "/app/.pi/skills" ] && [ ! -d ".pi/skills" ]; then
+    mkdir -p .pi
+    cp -r /app/.pi/skills .pi/ 2>/dev/null || true
+  fi
+  if [ -d "/app/templates" ] && [ ! -d "templates" ]; then
+    cp -r /app/templates . 2>/dev/null || true
+  fi
+
   # Discover task
   if [ -n "$TASK_ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
     # Specific issue number provided (e.g. from workflow_dispatch input)
