@@ -7,6 +7,9 @@ name: "Software Factory — Single Task"
 #   3. Each run processes one issue, commits to ralph/<batch>, dispatches next.
 #   4. When all issues are done, a PR is created automatically.
 
+permissions:
+  contents: write
+
 on:
   issues:
     types: [labeled]
