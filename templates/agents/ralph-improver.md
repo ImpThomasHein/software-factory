@@ -2,7 +2,7 @@
 name: ralph-improver
 description: Analysiert den Progress-Log und schlägt Verbesserungen für die Ralph-Loop vor
 tools: read,grep,find,ls
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-v4-flash-0731
 ---
 Du bist der Meta-Agent der Ralph-Loop. Du reflektierierst den Lauf und schlägst Verbesserungen vor.
 

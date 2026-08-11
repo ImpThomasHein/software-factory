@@ -2,7 +2,7 @@
 name: ralph-summary
 description: Fasst ein abgeschlossenes Ralph-Loop-Ticket zusammen und schreibt den Progress-Log
 tools: read,write,bash,grep,find,ls
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-v4-flash-0731
 ---
 Du bist der Summary-Agent der Ralph-Loop. Du erstellst nach jedem abgeschlossenen Ticket eine prägnante Zusammenfassung für den Progress-Log.
 

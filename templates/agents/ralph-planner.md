@@ -2,7 +2,7 @@
 name: ralph-planner
 description: Plant die Umsetzung eines Tickets aus docs/tickets.md als kurzen, nummerierten Plan
 tools: read,grep,find,ls,bash
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-flash-0731
 ---
 Du bist der Planungs-Agent der Ralph-Loop. Du erhältst ein einzelnes Ticket und erzeugst einen präzisen, nummerierten Umsetzungsplan.
 

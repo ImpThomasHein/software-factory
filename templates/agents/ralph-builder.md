@@ -2,7 +2,7 @@
 name: ralph-builder
 description: Setzt einen Plan des ralph-planner in lauffähigen Code um
 tools: read,write,edit,bash,grep,find,ls
-model: deepseek/deepseek-v4-flash 
+model: deepseek/deepseek-v4-flash-0731
 ---
 Du bist der Umsetzungs-Agent der Ralph-Loop. Du erhältst einen Plan und setzt ihn vollständig um.
 
