@@ -265,6 +265,27 @@ poll_status() {
 main() {
   log "Software Factory starting — repo: ${REPO:-unknown}, source: $TASK_SOURCE"
 
+  # Clone the repo for git operations (builder needs to commit/push)
+  WORKSPACE="/workspace"
+  if [ -n "$GITHUB_TOKEN" ] && [ -n "$REPO" ]; then
+    log "Cloning $REPO (branch: ${TARGET_BRANCH:-main})..."
+    git config --global user.email "ralph[bot]@users.noreply.github.com"
+    git config --global user.name "Ralph Loop"
+    git clone --depth 1 --branch "${TARGET_BRANCH:-main}" \
+      "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" "$WORKSPACE" 2>/dev/null || {
+      log "Shallow clone failed, trying full clone..."
+      git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" "$WORKSPACE" || fail "Failed to clone repo"
+      git -C "$WORKSPACE" checkout "${TARGET_BRANCH:-main}" || true
+    }
+    # Overlay baked-in .pi/agents and docs so they match what's expected
+    cp -r /app/.pi "$WORKSPACE/" 2>/dev/null || true
+    cp -r /app/docs "$WORKSPACE/" 2>/dev/null || true
+    log "Workspace ready at $WORKSPACE"
+  else
+    WORKSPACE="/app"
+    log "No GITHUB_TOKEN — running without git integration"
+  fi
+
   # Discover task
   if [ -n "$TASK_ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
     local issue_body
@@ -292,7 +313,7 @@ main() {
     --arg ticketId "$TICKET_ID" \
     --argjson maxFixerRetries "$MAX_ITERATIONS" \
     --arg verifyCommand "$VERIFY_COMMAND" \
-    --arg cwd "/app" \
+    --arg cwd "$WORKSPACE" \
     '{
       task: $task,
       ticketId: $ticketId,
@@ -318,6 +339,18 @@ main() {
 
   FINAL_RESULT=$(curl -s "http://localhost:${PORT:-1880}/ralph/status" 2>/dev/null || echo '{}')
   log "Final result: $(echo "$FINAL_RESULT" | jq -c '.')"
+
+  # Commit and push changes made by the builder
+  if [ -d "$WORKSPACE/.git" ]; then
+    if ! git -C "$WORKSPACE" diff --quiet || ! git -C "$WORKSPACE" diff --cached --quiet; then
+      log "Committing and pushing changes..."
+      git -C "$WORKSPACE" add -A
+      git -C "$WORKSPACE" commit -m "ralph: $(date -Iseconds)" || true
+      git -C "$WORKSPACE" push origin HEAD 2>/dev/null || log "Push failed (non-fatal)"
+    else
+      log "No changes to commit"
+    fi
+  fi
 
   kill "$NODERED_PID" 2>/dev/null || true
   log "Done."
