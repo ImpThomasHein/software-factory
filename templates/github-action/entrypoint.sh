@@ -194,9 +194,7 @@ discover_task_from_issues() {
 discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
   if [ ! -f "$tickets_path" ]; then
-    log "No tickets file found at $tickets_path (cwd=$(pwd))"
-    # Docker-in-Docker on self-hosted runners: bind mount may fail.
-    # Fallback: restore file from base64-encoded TICKETS_CONTENT_B64 env var.
+    # Restore from base64-encoded TICKETS_CONTENT_B64 env var
     if [ -n "${TICKETS_CONTENT_B64:-}" ]; then
       mkdir -p "$(dirname "$tickets_path")" 2>/dev/null || true
       echo "$TICKETS_CONTENT_B64" | base64 -d > "$tickets_path" 2>/dev/null || true
@@ -206,15 +204,12 @@ discover_task_from_markdown() {
       fi
       log "Restored $tickets_path from TICKETS_CONTENT_B64 env var"
     else
-      log "Directory listing of cwd:"
-      ls -la "$(pwd)/" 2>/dev/null | head -20
+      log "No tickets file found at $tickets_path and no TICKETS_CONTENT_B64 set"
       return 1
     fi
   fi
 
-  log "Parsing $tickets_path for frontier ticket (implemented by Node-RED flow via /ralph/start with markdown source)"
-  # When task_source=markdown, we pass the file path and let Node-RED's load_frontier handle it.
-  # We extract ticket title for logging.
+  log "Parsing $tickets_path for frontier ticket"
   TICKET_ID="markdown"
   ISSUE_NUMBER=""
   TASK="__FROM_FILE__:$tickets_path"
@@ -282,37 +277,8 @@ poll_status() {
 main() {
   log "Software Factory starting — repo: ${REPO:-unknown}, source: $TASK_SOURCE"
 
-  # gh CLI reads GH_TOKEN / GITHUB_TOKEN from env
-  if [ -n "$GITHUB_TOKEN" ]; then
-    export GH_TOKEN="$GITHUB_TOKEN"
-    cd "${GITHUB_WORKSPACE:-/github/workspace}" || {
-  log "ERROR: Cannot cd to ${GITHUB_WORKSPACE:-/github/workspace}, pwd=$(pwd)"
-  ls -la /github/workspace/ 2>/dev/null || echo "  /github/workspace does not exist"
-  fail "Workspace not accessible"
-}
-    git config --global --add safe.directory /github/workspace
-    git config --global user.email "ralph[bot]@users.noreply.github.com"
-    git config --global user.name "Ralph Loop"
-    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" 2>/dev/null || true
-  fi
-
-  # Docker-in-Docker mount fallback: copy agents and skills from image if missing
-  if [ ! -d ".pi/agents" ] && [ -d "/app/.pi/agents" ]; then
-    mkdir -p .pi
-    cp -r /app/.pi/agents .pi/
-    log "Copied .pi/agents from Docker image (mount fallback)"
-  fi
-  if [ -d "/app/.pi/skills" ] && [ ! -d ".pi/skills" ]; then
-    mkdir -p .pi
-    cp -r /app/.pi/skills .pi/ 2>/dev/null || true
-  fi
-  if [ -d "/app/templates" ] && [ ! -d "templates" ]; then
-    cp -r /app/templates . 2>/dev/null || true
-  fi
-
   # Discover task
   if [ -n "$TASK_ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    # Specific issue number provided (e.g. from workflow_dispatch input)
     local issue_body
     issue_body=$(gh issue view "$TASK_ISSUE_NUMBER" -R "$REPO" --json body --jq '.body' 2>/dev/null || echo "")
     if [ -z "$issue_body" ]; then
@@ -328,21 +294,6 @@ main() {
     discover_task_from_issues "$ISSUE_LABEL" "$BATCH_LABEL" || fail "No tasks found"
   fi
 
-  # Determine batch ID
-  if [ -n "$BATCH_LABEL" ]; then
-BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
-  else
-    BATCH_ID="single-${TICKET_ID}"
-  fi
-
-  # Git: checkout batch branch
-  cd "${GITHUB_WORKSPACE:-/github/workspace}" 2>/dev/null || true
-  if [ -d .git ]; then
-    ensure_batch_branch "$BATCH_ID" "$TARGET_BRANCH"
-  else
-    log "No git repo at $(pwd) — running without git integration"
-  fi
-
   # Start Node-RED
   start_nodered
 
@@ -353,7 +304,7 @@ BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
     --arg ticketId "$TICKET_ID" \
     --argjson maxFixerRetries "$MAX_ITERATIONS" \
     --arg verifyCommand "$VERIFY_COMMAND" \
-    --arg cwd "$(pwd)" \
+    --arg cwd "/app" \
     '{
       task: $task,
       ticketId: $ticketId,
@@ -375,34 +326,11 @@ BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
   fi
 
   log "Loop started. Polling for completion..."
-
-  # Wait for loop to finish
   poll_status
 
-  # Get final result
   FINAL_RESULT=$(curl -s "http://localhost:${PORT:-1880}/ralph/status" 2>/dev/null || echo '{}')
   log "Final result: $(echo "$FINAL_RESULT" | jq -c '.')"
 
-  # Commit and push changes
-  if [ -d .git ]; then
-    commit_and_push "$ISSUE_NUMBER"
-  fi
-
-  # Close the issue if it was completed
-  if [ -n "$ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    local verdict
-    verdict=$(echo "$FINAL_RESULT" | jq -r '.result.verdict // "unknown"' 2>/dev/null)
-    if [ "$verdict" = "READY" ] || [ "$verdict" = "OK" ]; then
-      close_issue "$ISSUE_NUMBER"
-    fi
-  fi
-
-  # Dispatch next or create PR
-  if [ -n "$BATCH_LABEL" ] && [ -n "$GITHUB_TOKEN" ]; then
-    dispatch_next_or_finish "$BATCH_ID" "$ISSUE_NUMBER"
-  fi
-
-  # Cleanup
   kill "$NODERED_PID" 2>/dev/null || true
   log "Done."
 }
