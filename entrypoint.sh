@@ -195,9 +195,21 @@ discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
   if [ ! -f "$tickets_path" ]; then
     log "No tickets file found at $tickets_path (cwd=$(pwd))"
-    log "Directory listing of cwd:"
-    ls -la "$(pwd)/${tickets_path%/*}" 2>/dev/null || ls -la "$(pwd)/" 2>/dev/null | head -20
-    return 1
+    # Docker-in-Docker on self-hosted runners: bind mount may fail.
+    # Fallback: restore file from base64-encoded TICKETS_CONTENT_B64 env var.
+    if [ -n "${TICKETS_CONTENT_B64:-}" ]; then
+      mkdir -p "$(dirname "$tickets_path")" 2>/dev/null || true
+      echo "$TICKETS_CONTENT_B64" | base64 -d > "$tickets_path" 2>/dev/null || true
+      if [ ! -f "$tickets_path" ] || [ ! -s "$tickets_path" ]; then
+        log "ERROR: Failed to decode TICKETS_CONTENT_B64"
+        return 1
+      fi
+      log "Restored $tickets_path from TICKETS_CONTENT_B64 env var"
+    else
+      log "Directory listing of cwd:"
+      ls -la "$(pwd)/" 2>/dev/null | head -20
+      return 1
+    fi
   fi
 
   log "Parsing $tickets_path for frontier ticket (implemented by Node-RED flow via /ralph/start with markdown source)"
