@@ -35,7 +35,7 @@ BATCH_ID=""
 
 # ── Logging ─────────────────────────────────────────────
 log()  { echo "[factory] $(date -Iseconds) $*"; }
-fail() { log "ERROR: $*"; kill "$NODERED_PID" 2>/dev/null; exit 1; }
+fail() { log "ERROR: $*"; kill "${NODERED_PID:-}" 2>/dev/null || true; exit 1; }
 
 # ── Git helpers ─────────────────────────────────────────
 ensure_batch_branch() {
@@ -194,7 +194,9 @@ discover_task_from_issues() {
 discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
   if [ ! -f "$tickets_path" ]; then
-    log "No tickets file found at $tickets_path"
+    log "No tickets file found at $tickets_path (cwd=$(pwd))"
+    log "Directory listing of cwd:"
+    ls -la "$(pwd)/${tickets_path%/*}" 2>/dev/null || ls -la "$(pwd)/" 2>/dev/null | head -20
     return 1
   fi
 
