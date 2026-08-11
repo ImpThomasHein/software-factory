@@ -43,6 +43,7 @@ ensure_batch_branch() {
   local base="$2"
   local batch_branch="ralph/${batch_id}"
   log "Ensuring batch branch: $batch_branch"
+  git remote get-url origin &>/dev/null || git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
   git fetch origin "$base" &>/dev/null || true
   if git ls-remote --heads origin "$batch_branch" | grep -q "$batch_branch"; then
     git checkout -b "$batch_branch" "origin/$batch_branch"
@@ -268,8 +269,15 @@ main() {
   # gh CLI reads GH_TOKEN / GITHUB_TOKEN from env
   if [ -n "$GITHUB_TOKEN" ]; then
     export GH_TOKEN="$GITHUB_TOKEN"
-    git config user.email "ralph[bot]@users.noreply.github.com"
-    git config user.name "Ralph Loop"
+    cd "${GITHUB_WORKSPACE:-/github/workspace}" || {
+  log "ERROR: Cannot cd to ${GITHUB_WORKSPACE:-/github/workspace}, pwd=$(pwd)"
+  ls -la /github/workspace/ 2>/dev/null || echo "  /github/workspace does not exist"
+  fail "Workspace not accessible"
+}
+    git config --global --add safe.directory /github/workspace
+    git config --global user.email "ralph[bot]@users.noreply.github.com"
+    git config --global user.name "Ralph Loop"
+    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" 2>/dev/null || true
   fi
 
   # Discover task
