@@ -53,7 +53,7 @@ on:
 
 jobs:
   factory:
-    runs-on: self-hosted
+    runs-on: finapp
     timeout-minutes: 120
     # Only run on issue events when ralph:task or ralph:batch-* label is added
     if: |
@@ -82,9 +82,10 @@ jobs:
       - name: Build and run Software Factory
         run: |
           cd "$GITHUB_WORKSPACE/repo"
-          docker build -t software-factory .
+          echo "[factory] Using pre-built software-factory:latest"
           docker run --rm \
             -e GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
+            -e DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
             -e LLM_API_KEY="${{ secrets.LLM_API_KEY }}" \
             -e GITHUB_REPOSITORY="${{ github.repository }}" \
             -e GITHUB_WORKSPACE="/github/workspace" \
