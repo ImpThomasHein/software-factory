@@ -40,6 +40,7 @@ RUN npm ci --omit=dev
 COPY lib/ ./lib/
 COPY nodes/ ./nodes/
 COPY templates/ ./templates/
+COPY .pi/ ./.pi/
 COPY flows.json settings.js ./
 
 # Entrypoint
