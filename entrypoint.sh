@@ -58,6 +58,8 @@ commit_and_push() {
     log "No changes to commit for #${issue_num}"
     return 0
   fi
+  # Configure git credential helper via gh CLI (already authed with GH_TOKEN)
+  gh auth setup-git -h github.com 2>/dev/null || true
   git add -A
   git commit -m "ralph: process issue #${issue_num}
 
@@ -306,7 +308,7 @@ BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
   fi
 
   # Git: checkout batch branch
-  cd "$GITHUB_WORKSPACE" 2>/dev/null || cd /tmp
+  cd "${GITHUB_WORKSPACE:-/github/workspace}" 2>/dev/null || true
   if [ -d .git ]; then
     ensure_batch_branch "$BATCH_ID" "$TARGET_BRANCH"
   else
