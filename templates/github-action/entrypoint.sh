@@ -237,7 +237,7 @@ start_nodered() {
 # ── Step 4: Poll status ─────────────────────────────────
 poll_status() {
   # Wait until ralphLoopRunning becomes false
-  local max_wait=3600  # 1 hour max
+  local max_wait=7200  # 2 hours max
   local waited=0
   local interval=5
 
