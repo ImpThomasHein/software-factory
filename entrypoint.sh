@@ -283,7 +283,7 @@ main() {
     # Install dependencies so verify command (npm run build && npm test) works
     log "Installing dependencies in workspace..."
     npm --prefix "$WORKSPACE" ci 2>/dev/null || npm --prefix "$WORKSPACE" install
-    npm --prefix "$WORKSPACE" run db:generate 2>/dev/null || npx --prefix "$WORKSPACE" prisma generate
+    DATABASE_URL="file:./dev.db" npm --prefix "$WORKSPACE" run db:generate 2>/dev/null || DATABASE_URL="file:./dev.db" npx --prefix "$WORKSPACE" prisma generate
     log "Workspace ready at $WORKSPACE"
   else
     WORKSPACE="/app"
