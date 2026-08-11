@@ -34,8 +34,10 @@ Folgende Stellen im Workflow (`.github/workflows/software-factory.yml`) projekts
 | Zeile | Default | Anpassung |
 |-------|---------|-----------|
 | `runs-on:` | `self-hosted` | Eigenen Runner-Label setzen (z.B. `finapp`), sonst läuft der Job auf einem falschen Runner |
-| `verify_command` | `pnpm build && pnpm test` | Auf Projekt-Paketmanager umstellen (`npm run build && npm test`) |
+| `verify_command` | `pnpm build && pnpm test` | Auf Projekt-Paketmanager umstellen. In CI ohne DB: nur `npm run build` |
+| `permissions:` | nicht vorhanden | `contents: write` ergänzen → **Pflicht im Private-Repo**, sonst `Write access not granted` |
 | `tickets_path` | `docs/tickets.md` | Passt meistens, nur ändern wenn Tickets woanders liegen |
+| DATABASE_URL (env) | nicht gesetzt | Dummy für `prisma generate`: `-e DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"` |
 
 ## 4. GitHub Runner aufsetzen
 
@@ -107,6 +109,6 @@ gh workflow run software-factory.yml -R OWNER/REPO --ref main \
 | `docs/tickets.md not found` | Volume-Mount fehlt oder Pfad falsch | Runner mit `-v /tmp/runner/work:/tmp/runner/work` starten |
 | `not in a git directory` | `git config` vor `cd` | entrypoint.sh: `cd` vor `git config` (✅ gefixt) |
 | `detected dubious ownership` | UID-Mismatch im Container | `git config --global --add safe.directory` (✅ gefixt) |
-| `access rights` beim Push | Git-Credential fehlt | `gh auth setup-git` im entrypoint (✅ gefixt) |
+| `Write access not granted` beim Push | `GITHUB_TOKEN` hat kein Write im Private-Repo | `permissions: contents: write` in den Workflow (✅ gefixt) |
 | Job läuft auf falschem Runner | `runs-on: self-hosted` matched alle | Eigenen Label setzen |
 | Docker-Build dauert ewig | Kein Cache | Pre-Built-Image nutzen |
