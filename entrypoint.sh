@@ -282,8 +282,8 @@ main() {
     cp -r /app/docs "$WORKSPACE/" 2>/dev/null || true
     # Install dependencies so verify command (npm run build && npm test) works
     log "Installing dependencies in workspace..."
-    npm --prefix "$WORKSPACE" ci 2>/dev/null || npm --prefix "$WORKSPACE" install
-    DATABASE_URL="file:./dev.db" npx --prefix "$WORKSPACE" prisma generate --schema=prisma/schema.dev.prisma 2>/dev/null || log "prisma generate failed (non-fatal for unit tests)"
+    cd "$WORKSPACE" && npm ci 2>/dev/null || (cd "$WORKSPACE" && npm install)
+    cd "$WORKSPACE" && npx prisma generate --schema=prisma/schema.dev.prisma 2>/dev/null || log "prisma generate failed (non-fatal for unit tests)"
     log "Workspace ready at $WORKSPACE"
   else
     WORKSPACE="/app"
