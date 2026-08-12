@@ -57,6 +57,9 @@ on:
 jobs:
   factory:
     runs-on: finapp
+    permissions:
+      actions: write
+      contents: write
     timeout-minutes: 120
     # Only run on issue events when ralph:task or ralph:batch-* label is added
     if: |
