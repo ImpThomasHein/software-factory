@@ -57,8 +57,8 @@ module.exports = {
     ralphVerifyTimeoutMs: Number(process.env.RALPH_VERIFY_TIMEOUT_MS) || 20 * 60 * 1000,
     // Stall detection: if no agent/progress activity occurs for this many
     // milliseconds, the poll_status loop in entrypoint.sh exits early.
-    // Override via RALPH_STALL_TIMEOUT_MS (in milliseconds). Default 20 min.
-    ralphStallTimeoutMs: Number(process.env.RALPH_STALL_TIMEOUT_MS) || 20 * 60 * 1000,
+    // Override via RALPH_STALL_TIMEOUT_MS (in milliseconds). Default 30 min.
+    ralphStallTimeoutMs: Number(process.env.RALPH_STALL_TIMEOUT_MS) || 30 * 60 * 1000,
      // Safety net so a persistently broken build can't loop forever: after this many
      // failed verify attempts, the loop reports failure instead of retrying again.
      // The pipeline still always re-verifies after every ralph-ci-fixer run.
