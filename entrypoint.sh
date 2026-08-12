@@ -383,13 +383,13 @@ main() {
     fi
     if [ "$remaining" -gt 0 ]; then
       log "Markdown: $remaining unchecked item(s) remaining. Dispatching next run."
-      gh api "repos/${REPO}/dispatches" \
-        -f event_type=ralph-task-completed \
-        -f "client_payload[task_source]=markdown" \
-        -f "client_payload[tickets_path]=${TICKETS_PATH}" \
-        -f "client_payload[max_iterations]=${MAX_ITERATIONS}" \
-        -f "client_payload[target_branch]=${TARGET_BRANCH}" \
-        -f "client_payload[verify_command]=${VERIFY_COMMAND}" \
+      gh workflow run software-factory.yml \
+        --ref "$(git rev-parse --abbrev-ref HEAD)" \
+        -f task_source=markdown \
+        -f tickets_path="${TICKETS_PATH}" \
+        -f max_iterations="${MAX_ITERATIONS}" \
+        -f target_branch="${TARGET_BRANCH}" \
+        -f verify_command="${VERIFY_COMMAND}" \
         2>&1 || log "Failed to dispatch next markdown run"
     else
       log "Markdown: all tickets done."
