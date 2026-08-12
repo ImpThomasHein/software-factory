@@ -35,7 +35,7 @@ BATCH_ID=""
 
 # ── Logging ─────────────────────────────────────────────
 log()  { echo "[factory] $(date -Iseconds) $*"; }
-fail() { log "ERROR: $*"; kill "$NODERED_PID" 2>/dev/null; exit 1; }
+fail() { log "ERROR: $*"; kill "${NODERED_PID:-}" 2>/dev/null || true; exit 1; }
 
 # ── Git helpers ─────────────────────────────────────────
 ensure_batch_branch() {
@@ -45,13 +45,8 @@ ensure_batch_branch() {
   log "Ensuring batch branch: $batch_branch"
   git remote get-url origin &>/dev/null || git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
   git fetch origin "$base" &>/dev/null || true
-  # Already on the right branch? Nothing to do.
-  if [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "$batch_branch" ]; then
-    log "Already on $batch_branch"
-    return 0
-  fi
   if git ls-remote --heads origin "$batch_branch" | grep -q "$batch_branch"; then
-    git checkout "$batch_branch" 2>/dev/null || git checkout -b "$batch_branch" "origin/$batch_branch"
+    git checkout -b "$batch_branch" "origin/$batch_branch"
   else
     git checkout -b "$batch_branch" "origin/$base" || git checkout -b "$batch_branch" "$base"
   fi
@@ -199,19 +194,16 @@ discover_task_from_issues() {
 discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
   if [ ! -f "$tickets_path" ]; then
-    log "No tickets file found at $tickets_path"
+    log "ERROR: tickets file not found at $tickets_path"
     return 1
   fi
 
-  log "Parsing $tickets_path for frontier ticket (implemented by Node-RED flow via /ralph/start with markdown source)"
-  # When task_source=markdown, we pass the file path and let Node-RED's load_frontier handle it.
-  # We extract ticket title for logging.
+  log "Parsing $tickets_path for frontier ticket"
   TICKET_ID="markdown"
   ISSUE_NUMBER=""
   TASK="__FROM_FILE__:$tickets_path"
   return 0
 }
-
 # ── Step 1: Start Node-RED ──────────────────────────────
 start_nodered() {
   log "Starting Node-RED on port ${PORT:-1880}..."
@@ -273,23 +265,33 @@ poll_status() {
 main() {
   log "Software Factory starting — repo: ${REPO:-unknown}, source: $TASK_SOURCE"
 
-  # gh CLI reads GH_TOKEN / GITHUB_TOKEN from env
-  if [ -n "$GITHUB_TOKEN" ]; then
-    export GH_TOKEN="$GITHUB_TOKEN"
-    cd "${GITHUB_WORKSPACE:-/github/workspace}" || {
-  log "ERROR: Cannot cd to ${GITHUB_WORKSPACE:-/github/workspace}, pwd=$(pwd)"
-  ls -la /github/workspace/ 2>/dev/null || echo "  /github/workspace does not exist"
-  fail "Workspace not accessible"
-}
-    git config --global --add safe.directory /github/workspace
+  # Clone the repo for git operations (builder needs to commit/push)
+  WORKSPACE="/workspace"
+  if [ -n "$GITHUB_TOKEN" ] && [ -n "$REPO" ]; then
+    log "Cloning $REPO (branch: ${TARGET_BRANCH:-main})..."
     git config --global user.email "ralph[bot]@users.noreply.github.com"
     git config --global user.name "Ralph Loop"
-    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" 2>/dev/null || true
+    git clone --depth 1 --branch "${TARGET_BRANCH:-main}" \
+      "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" "$WORKSPACE" 2>/dev/null || {
+      log "Shallow clone failed, trying full clone..."
+      git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" "$WORKSPACE" || fail "Failed to clone repo"
+      git -C "$WORKSPACE" checkout "${TARGET_BRANCH:-main}" || true
+    }
+    # Overlay baked-in .pi/agents and docs so they match what's expected
+    cp -r /app/.pi "$WORKSPACE/" 2>/dev/null || true
+    cp -r /app/docs "$WORKSPACE/" 2>/dev/null || true
+    # Install dependencies so verify command (npm run build && npm test) works
+    log "Installing dependencies in workspace..."
+    cd "$WORKSPACE" && npm ci 2>/dev/null || (cd "$WORKSPACE" && npm install)
+    cd "$WORKSPACE" && npx prisma generate --schema=prisma/schema.dev.prisma 2>/dev/null || log "prisma generate failed (non-fatal for unit tests)"
+    log "Workspace ready at $WORKSPACE"
+  else
+    WORKSPACE="/app"
+    log "No GITHUB_TOKEN — running without git integration"
   fi
 
   # Discover task
   if [ -n "$TASK_ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    # Specific issue number provided (e.g. from workflow_dispatch input)
     local issue_body
     issue_body=$(gh issue view "$TASK_ISSUE_NUMBER" -R "$REPO" --json body --jq '.body' 2>/dev/null || echo "")
     if [ -z "$issue_body" ]; then
@@ -305,21 +307,6 @@ main() {
     discover_task_from_issues "$ISSUE_LABEL" "$BATCH_LABEL" || fail "No tasks found"
   fi
 
-  # Determine batch ID
-  if [ -n "$BATCH_LABEL" ]; then
-BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
-  else
-    BATCH_ID="single-${TICKET_ID}"
-  fi
-
-  # Git: checkout batch branch
-  cd "${GITHUB_WORKSPACE:-/github/workspace}" 2>/dev/null || true
-  if [ -d .git ]; then
-    ensure_batch_branch "$BATCH_ID" "$TARGET_BRANCH"
-  else
-    log "No git repo at $(pwd) — running without git integration"
-  fi
-
   # Start Node-RED
   start_nodered
 
@@ -330,7 +317,7 @@ BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
     --arg ticketId "$TICKET_ID" \
     --argjson maxFixerRetries "$MAX_ITERATIONS" \
     --arg verifyCommand "$VERIFY_COMMAND" \
-    --arg cwd "$(pwd)" \
+    --arg cwd "$WORKSPACE" \
     '{
       task: $task,
       ticketId: $ticketId,
@@ -352,62 +339,23 @@ BATCH_ID="${BATCH_LABEL#ralph:}"  # ralph:batch-42 → batch-42
   fi
 
   log "Loop started. Polling for completion..."
-
-  # Wait for loop to finish
   poll_status
 
-  # Get final result
   FINAL_RESULT=$(curl -s "http://localhost:${PORT:-1880}/ralph/status" 2>/dev/null || echo '{}')
   log "Final result: $(echo "$FINAL_RESULT" | jq -c '.')"
 
-  # Commit and push changes
-  if [ -d .git ]; then
-    commit_and_push "$ISSUE_NUMBER"
-  fi
-
-  # Close the issue if it was completed
-  if [ -n "$ISSUE_NUMBER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    local verdict
-    verdict=$(echo "$FINAL_RESULT" | jq -r '.result.verdict // "unknown"' 2>/dev/null)
-    if [ "$verdict" = "READY" ] || [ "$verdict" = "OK" ]; then
-      close_issue "$ISSUE_NUMBER"
-    fi
-  fi
-
-  # Dispatch next or create PR
-  if [ -n "$BATCH_LABEL" ] && [ -n "$GITHUB_TOKEN" ]; then
-    dispatch_next_or_finish "$BATCH_ID" "$ISSUE_NUMBER"
-  fi
-
-  # Markdown mode: auto-chain if there are undone tickets
-  if [ "$TASK_SOURCE" = "markdown" ] && [ -n "$GITHUB_TOKEN" ]; then
-    local remaining=0
-    if [ -f "$TICKETS_PATH" ]; then
-      remaining=$(grep -c '^\s*-\s\+\[ \]' "$TICKETS_PATH" 2>/dev/null || echo "0")
-    fi
-    if [ "$remaining" -gt 0 ]; then
-      log "Markdown: $remaining unchecked item(s) remaining. Dispatching next run."
-      gh api "repos/${REPO}/dispatches" \
-        -f event_type=ralph-task-completed \
-        -f "client_payload[task_source]=markdown" \
-        -f "client_payload[tickets_path]=${TICKETS_PATH}" \
-        -f "client_payload[max_iterations]=${MAX_ITERATIONS}" \
-        -f "client_payload[target_branch]=${TARGET_BRANCH}" \
-        -f "client_payload[verify_command]=${VERIFY_COMMAND}" \
-        2>&1 || log "Failed to dispatch next markdown run"
+  # Commit and push changes made by the builder
+  if [ -d "$WORKSPACE/.git" ]; then
+    if ! git -C "$WORKSPACE" diff --quiet || ! git -C "$WORKSPACE" diff --cached --quiet; then
+      log "Committing and pushing changes..."
+      git -C "$WORKSPACE" add -A
+      git -C "$WORKSPACE" commit -m "ralph: $(date -Iseconds)" || true
+      git -C "$WORKSPACE" push origin HEAD 2>&1 || log "Push failed (non-fatal)"
     else
-      log "Markdown: all tickets done. Creating PR."
-      git push origin HEAD 2>&1 || true
-      gh pr create \
-        --base "$TARGET_BRANCH" \
-        --head "$(git rev-parse --abbrev-ref HEAD)" \
-        --title "Ralph: Markdown tickets complete" \
-        --body "Alle Tickets aus \`${TICKETS_PATH}\` wurden bearbeitet." \
-        2>&1 || log "Failed to create PR"
+      log "No changes to commit"
     fi
   fi
 
-  # Cleanup
   kill "$NODERED_PID" 2>/dev/null || true
   log "Done."
 }

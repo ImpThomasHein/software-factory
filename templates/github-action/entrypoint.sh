@@ -350,7 +350,7 @@ main() {
       log "Committing and pushing changes..."
       git -C "$WORKSPACE" add -A
       git -C "$WORKSPACE" commit -m "ralph: $(date -Iseconds)" || true
-      git -C "$WORKSPACE" push origin HEAD 2>/dev/null || log "Push failed (non-fatal)"
+      git -C "$WORKSPACE" push origin HEAD 2>&1 || log "Push failed (non-fatal)"
     else
       log "No changes to commit"
     fi
