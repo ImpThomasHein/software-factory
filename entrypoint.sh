@@ -302,7 +302,7 @@ main() {
     # Install dependencies so verify command (npm run build && npm test) works
     log "Installing dependencies in workspace..."
     cd "$WORKSPACE" && npm ci 2>/dev/null || (cd "$WORKSPACE" && npm install)
-    cd "$WORKSPACE" && npx prisma generate --schema=prisma/schema.dev.prisma 2>/dev/null || log "prisma generate failed (non-fatal for unit tests)"
+    cd "$WORKSPACE" && npx prisma generate --schema=prisma/schema.prisma 2>/dev/null || npx prisma generate --schema=prisma/schema.dev.prisma 2>/dev/null || log "WARNING: prisma generate failed — build may fail if Prisma models changed"
     log "Workspace ready at $WORKSPACE"
   else
     WORKSPACE="/app"
