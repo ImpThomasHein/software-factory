@@ -98,6 +98,7 @@ dispatch_next_or_finish() {
   if [ "$remaining" -gt 0 ]; then
     log "Batch $batch_id: $remaining issue(s) remaining. Dispatching next run."
     gh workflow run software-factory.yml \
+      --ref "$(git rev-parse --abbrev-ref HEAD)" \
       -f task_source="$TASK_SOURCE" \
       -f batch_label="$BATCH_LABEL" \
       -f issue_label="$ISSUE_LABEL" \
@@ -105,7 +106,6 @@ dispatch_next_or_finish() {
       -f max_iterations="$MAX_ITERATIONS" \
       -f target_branch="$TARGET_BRANCH" \
       -f verify_command="$VERIFY_COMMAND" \
-      2>&1 || log "Failed to dispatch next run"
   else
     log "Batch $batch_id: all issues done. Creating PR."
     git push origin "$batch_branch" 2>&1 || true
