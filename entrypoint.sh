@@ -238,7 +238,7 @@ poll_status() {
   local max_wait=7200  # 2 hours max safety net
   local waited=0
   local interval=5
-  local stall_timeout=600  # 10 minutes without progress = stalled
+  local stall_timeout=1200  # 20 minutes without progress = stalled
   local last_activity_nonce=-1
   local stall_started=0
 

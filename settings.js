@@ -48,17 +48,17 @@ module.exports = {
     // (msg.ralph.verifyCommand) or globally via RALPH_VERIFY_COMMAND.
     ralphVerifyCommand: process.env.RALPH_VERIFY_COMMAND || "pnpm build && pnpm test",
     // Default maximum time a single agent run (pi CLI process) may take before
-    // being force-killed. Default 30 min. Override per-flow via msg.ralph.agentTimeoutMs
+    // being force-killed. Default 20 min. Override per-flow via msg.ralph.agentTimeoutMs
     // or globally via RALPH_AGENT_TIMEOUT_MS (in milliseconds).
-    ralphAgentTimeoutMs: Number(process.env.RALPH_AGENT_TIMEOUT_MS) || 30 * 60 * 1000,
+    ralphAgentTimeoutMs: Number(process.env.RALPH_AGENT_TIMEOUT_MS) || 20 * 60 * 1000,
     // Default maximum time the verify command (pnpm build && pnpm test) may take
-    // before being force-killed. Default 30 min. Override via msg.ralph.verifyTimeoutMs
+    // before being force-killed. Default 20 min. Override via msg.ralph.verifyTimeoutMs
     // or globally via RALPH_VERIFY_TIMEOUT_MS (in milliseconds).
-    ralphVerifyTimeoutMs: Number(process.env.RALPH_VERIFY_TIMEOUT_MS) || 30 * 60 * 1000,
+    ralphVerifyTimeoutMs: Number(process.env.RALPH_VERIFY_TIMEOUT_MS) || 20 * 60 * 1000,
     // Stall detection: if no agent/progress activity occurs for this many
     // milliseconds, the poll_status loop in entrypoint.sh exits early.
-    // Override via RALPH_STALL_TIMEOUT_MS (in milliseconds). Default 10 min.
-    ralphStallTimeoutMs: Number(process.env.RALPH_STALL_TIMEOUT_MS) || 10 * 60 * 1000,
+    // Override via RALPH_STALL_TIMEOUT_MS (in milliseconds). Default 20 min.
+    ralphStallTimeoutMs: Number(process.env.RALPH_STALL_TIMEOUT_MS) || 20 * 60 * 1000,
      // Safety net so a persistently broken build can't loop forever: after this many
      // failed verify attempts, the loop reports failure instead of retrying again.
      // The pipeline still always re-verifies after every ralph-ci-fixer run.
