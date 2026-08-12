@@ -356,6 +356,27 @@ main() {
     fi
   fi
 
+  # Markdown mode: auto-chain next run if unchecked tickets remain
+  if [ "$TASK_SOURCE" = "markdown" ] && [ -n "$GITHUB_TOKEN" ]; then
+    local remaining=0
+    if [ -f "$WORKSPACE/$TICKETS_PATH" ]; then
+      remaining=$(grep -c '^\s*-\s\+\[ \]' "$WORKSPACE/$TICKETS_PATH" 2>/dev/null || echo "0")
+    fi
+    if [ "$remaining" -gt 0 ]; then
+      log "Markdown: $remaining unchecked item(s) remaining. Dispatching next run."
+      gh api "repos/${REPO}/dispatches" \
+        -f event_type=ralph-task-completed \
+        -f "client_payload[task_source]=markdown" \
+        -f "client_payload[tickets_path]=${TICKETS_PATH}" \
+        -f "client_payload[max_iterations]=${MAX_ITERATIONS}" \
+        -f "client_payload[target_branch]=${TARGET_BRANCH}" \
+        -f "client_payload[verify_command]=${VERIFY_COMMAND}" \
+        2>&1 || log "Failed to dispatch next markdown run"
+    else
+      log "Markdown: all tickets done."
+    fi
+  fi
+
   kill "$NODERED_PID" 2>/dev/null || true
   log "Done."
 }
