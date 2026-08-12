@@ -77,7 +77,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.target_branch || 'main' }}
+          ref: ${{ github.event.inputs.target_branch || github.event.client_payload.target_branch || 'main' }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           path: repo
@@ -92,14 +92,14 @@ jobs:
             -e LLM_API_KEY="${{ secrets.LLM_API_KEY }}" \
             -e GITHUB_REPOSITORY="${{ github.repository }}" \
             -e GITHUB_WORKSPACE="/github/workspace" \
-            -e INPUT_TASK_SOURCE="${{ github.event.inputs.task_source || 'issues' }}" \
-            -e INPUT_BATCH_LABEL="${{ steps.inputs.outputs.batch_label || github.event.inputs.batch_label || '' }}" \
-            -e INPUT_ISSUE_LABEL="${{ github.event.inputs.issue_label || 'ralph:task' }}" \
-            -e INPUT_TASK_ISSUE_NUMBER="${{ steps.inputs.outputs.task_issue_number || github.event.inputs.task_issue_number || '' }}" \
-            -e INPUT_TICKETS_PATH="${{ github.event.inputs.tickets_path || 'docs/tickets.md' }}" \
-            -e INPUT_MAX_ITERATIONS="${{ github.event.inputs.max_iterations || '1' }}" \
-            -e INPUT_TARGET_BRANCH="${{ github.event.inputs.target_branch || 'main' }}" \
-            -e INPUT_VERIFY_COMMAND="${{ github.event.inputs.verify_command || 'pnpm build && pnpm test' }}" \
+            -e INPUT_TASK_SOURCE="${{ github.event.inputs.task_source || github.event.client_payload.task_source || 'issues' }}" \
+            -e INPUT_BATCH_LABEL="${{ steps.inputs.outputs.batch_label || github.event.inputs.batch_label || github.event.client_payload.batch_label || '' }}" \
+            -e INPUT_ISSUE_LABEL="${{ github.event.inputs.issue_label || github.event.client_payload.issue_label || 'ralph:task' }}" \
+            -e INPUT_TASK_ISSUE_NUMBER="${{ steps.inputs.outputs.task_issue_number || github.event.inputs.task_issue_number || github.event.client_payload.task_issue_number || '' }}" \
+            -e INPUT_TICKETS_PATH="${{ github.event.inputs.tickets_path || github.event.client_payload.tickets_path || 'docs/tickets.md' }}" \
+            -e INPUT_MAX_ITERATIONS="${{ github.event.inputs.max_iterations || github.event.client_payload.max_iterations || '1' }}" \
+            -e INPUT_TARGET_BRANCH="${{ github.event.inputs.target_branch || github.event.client_payload.target_branch || 'main' }}" \
+            -e INPUT_VERIFY_COMMAND="${{ github.event.inputs.verify_command || github.event.client_payload.verify_command || 'pnpm build && pnpm test' }}" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$GITHUB_WORKSPACE/repo:/github/workspace" \
             -w /github/workspace \
