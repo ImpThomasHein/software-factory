@@ -151,9 +151,12 @@ module.exports = function (RED) {
         }
         node._statusLines = []; // fresh scrolling status log for this run
         pushStatus(node, { fill: "blue", shape: "dot" }, `running: ${agentName}`);
-
         const startedAt = Date.now();
-        const result = await runAgent(effectiveAgent, task, { cwd }, ac.signal, (evt) => {
+        // Report current activity to /ralph/status for stall detection
+        node.context().global.set("ralphCurrentAgent", agentName);
+        node.context().global.set("ralphCurrentIteration", iteration || 0);
+        node.context().global.set("ralphActivityNonce", (node.context().global.get("ralphActivityNonce") || 0) + 1);
+        const result = await runAgent(effectiveAgent, task, { cwd, timeoutMs: msg?.ralph?.agentTimeoutMs }, ac.signal, (evt) => {
           pushStatus(node, { fill: "blue", shape: "dot" }, `${agentName} · turn ${evt.messages.filter((m) => m.role === "assistant").length}`);
           send([null, {
             ...msg,
@@ -170,8 +173,10 @@ module.exports = function (RED) {
             `${cmdLine}\n\ncwd: ${inv.cwd}\nmodel: ${inv.model || "default"}\ntools: ${(inv.tools || []).join(", ") || "default"}`,
           );
         });
+        // Bump activity nonce so stall detection knows the agent completed
+        node.context().global.set("ralphActivityNonce", (node.context().global.get("ralphActivityNonce") || 0) + 1);
 
-        const failed = result.exitCode !== 0 || result.stopReason === "aborted" || result.stopReason === "error";
+        const failed = result.exitCode !== 0 || result.stopReason === "aborted" || result.stopReason === "error" || result.stopReason === "timeout";
 
         pushStatus(node, { fill: failed ? "red" : "green", shape: "dot" }, `${agentName} done in ${Math.round((Date.now() - startedAt) / 1000)}s`);
 
@@ -222,4 +227,3 @@ module.exports = function (RED) {
 
   RED.nodes.registerType("ralph-run-agent", RalphRunAgentNode);
 };
-

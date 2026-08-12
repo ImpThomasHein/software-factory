@@ -193,12 +193,13 @@ discover_task_from_issues() {
 
 discover_task_from_markdown() {
   local tickets_path="${1:-$TICKETS_PATH}"
+  log "Parsing $tickets_path for frontier ticket (implemented by Node-RED flow via /ralph/start with markdown source)"
   if [ ! -f "$tickets_path" ]; then
     log "ERROR: tickets file not found at $tickets_path"
     return 1
   fi
 
-  log "Parsing $tickets_path for frontier ticket"
+  log "Parsing $tickets_path for frontier ticket (implemented by Node-RED flow via /ralph/start with markdown source)"
   TICKET_ID="markdown"
   ISSUE_NUMBER=""
   TASK="__FROM_FILE__:$tickets_path"
@@ -234,9 +235,12 @@ start_nodered() {
 # ── Step 4: Poll status ─────────────────────────────────
 poll_status() {
   # Wait until ralphLoopRunning becomes false
-  local max_wait=7200  # 2 hours max
+  local max_wait=7200  # 2 hours max safety net
   local waited=0
   local interval=5
+  local stall_timeout=600  # 10 minutes without progress = stalled
+  local last_activity_nonce=-1
+  local stall_started=0
 
   while [ $waited -lt $max_wait ]; do
     local status
@@ -252,6 +256,21 @@ poll_status() {
       log "Loop finished after ${waited}s. Result:"
       echo "$status" | jq '.'
       return 0
+    fi
+
+    # ── Stall detection ──
+    local current_nonce current_agent
+    current_nonce=$(echo "$status" | jq -r '.activityNonce // -1' 2>/dev/null)
+    current_agent=$(echo "$status" | jq -r '.currentAgent // "unknown"' 2>/dev/null)
+    if [ "$current_nonce" != "$last_activity_nonce" ]; then
+      last_activity_nonce="$current_nonce"
+      stall_started=0
+    elif [ "$stall_started" -eq 0 ]; then
+      stall_started=$waited
+      log "No activity change detected (agent: ${current_agent}) — monitoring for stall"
+    fi
+    if [ "$stall_started" -gt 0 ] && [ $((waited - stall_started)) -ge $stall_timeout ]; then
+      fail "Pipeline stalled for ${stall_timeout}s (agent: ${current_agent}, last activity at ${stall_started}s) — aborting"
     fi
 
     sleep $interval

@@ -52,7 +52,15 @@ module.exports = function (RED) {
           else upstream.signal.addEventListener("abort", () => ac.abort(), { once: true });
         }
 
-        const result = await runVerifyCommand(command, cwd, ac.signal);
+        // Report current activity to /ralph/status for stall detection
+        node.context().global.set("ralphCurrentAgent", "ralph-verify");
+        node.context().global.set("ralphActivityNonce", (node.context().global.get("ralphActivityNonce") || 0) + 1);
+
+        const timeoutMs = msg?.ralph?.verifyTimeoutMs ?? undefined;
+        const result = await runVerifyCommand(command, cwd, ac.signal, timeoutMs);
+
+        // Bump activity nonce after verify completes
+        node.context().global.set("ralphActivityNonce", (node.context().global.get("ralphActivityNonce") || 0) + 1);
         node.status({
           fill: result.success ? "green" : "red",
           shape: "dot",
