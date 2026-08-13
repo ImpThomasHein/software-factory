@@ -103,6 +103,9 @@ gh workflow run software-factory.yml -R OWNER/REPO --ref main \
   -f verify_command="npm run build && npm test" \
   -f max_iterations=3
 ```
+
+> ⚠️ **`--ref` zwingend mit `target_branch` abgleichen.** Ohne `--ref` dispatched `gh workflow run` auf dem **Default-Branch** des Repos. `-f target_branch=` steuert nur den `actions/checkout`-Ref im Job (welcher Code und welche `docs/tickets.md` geladen werden) — die Workflow-Definition selbst (`.github/workflows/software-factory.yml`) lädt GitHub hingegen vom `--ref`-Branch. Ist Default-Branch ≠ Ziel-Branch und `--ref` nicht gesetzt, läuft eine veraltete/andere Factory-Konfiguration (z.B. ohne `permissions: actions: write`, ohne `cp -r docs`, mit alter `GITHUB_WORKSPACE`-Pfadlogik und `.pi`/`docs`-Overrides), obwohl der Code-Checkout korrekt auf den Ziel-Branch zeigt → Symptome: `docs/tickets.md not found` oder fehlender nachgelagerter `build-dev.yml`-Dispatch. **Regel:** `--ref <branch>` immer auf denselben Wert wie `target_branch=<branch>` setzen (z.B. beide `develop`).
+
 ## Häufige Fehler
 
 | Symptom | Ursache | Fix |
